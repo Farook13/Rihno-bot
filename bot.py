@@ -23,7 +23,8 @@ async def start(client: Client, message: Message):
         await message.reply_text(
             "Please join our channel to use this bot!",
             reply_markup=InlineKeyboardMarkup(
-                [[InlineKeyboardButton("Join Channel", url=f"https://t.me/{AUTH_CHANNEL[4:]}")]]
+                [[InlineKeyboardButton("Join Channel", url=f"https://t.me/batmanmoviehub
+                ")]]
             )
         )
         return
