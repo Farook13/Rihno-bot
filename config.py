@@ -5,9 +5,22 @@ from dotenv import load_dotenv
 
 load_dotenv()  # Load environment variables from .env file
 
+id_pattern = re.compile(r'^.\d+$')
+def is_enabled(value, default):
+    if value.lower() in ["true", "yes", "1", "enable", "y"]:
+        return True
+    elif value.lower() in ["false", "no", "0", "disable", "n"]:
+        return False
+    else:
+        return default
+#---------------------------------------------------------------
+#---------------------------------------------------------------         ,
+
+
 # Telegram Bot Token from @BotFather
 class Config:
 # Telegram API ID and Hash from my.telegram.orgAPI_ID = int(environ.get('API_ID', '12618934'))
+SESSION = environ.get('SESSION', 'Media_search')
 API_ID = int(environ.get('API_ID', '12618934'))
 API_HASH = environ.get('API_HASH', '49aacd0bc2f8924add29fb02e20c8a16')
 
