@@ -1,7 +1,6 @@
 import logging
 from pyrogram import filters
 from pyrogram.types import CallbackQuery
-from config import Config
 from utils.helpers import check_subscription, send_subscribe_message
 
 logger = logging.getLogger('bot')
