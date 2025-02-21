@@ -2,11 +2,11 @@ import sys
 import subprocess
 
 def run_bot():
-    """Run the main bot script."""
+    """Run the main bot script (bot.py)."""
     subprocess.run([sys.executable, "bot.py"])
 
 def populate_database():
-    """Populate the database with sample data."""
+    """Populate the database with sample data (populate_db.py)."""
     subprocess.run([sys.executable, "populate_db.py"])
 
 def print_help():
@@ -18,7 +18,7 @@ Usage:
   python run.py <command>
 
 Commands:
-  bot         Run the Telegram bot
+  bot         Run the Telegram bot (executes bot.py)
   populate    Populate the MongoDB database with sample data
   help        Show this help message
     """)
