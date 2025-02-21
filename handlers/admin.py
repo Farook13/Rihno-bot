@@ -1,8 +1,7 @@
 import logging
 from pyrogram import filters
 from pyrogram.types import Message
-from database.filter_db import FilterDB
-from config import Config
+
 from utils.helpers import is_admin, get_keywords_from_text
 
 logger = logging.getLogger('bot')
