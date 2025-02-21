@@ -1,0 +1,23 @@
+services:
+  bot:
+    image: python:3.9-slim
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python main.py
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - API_ID=${API_ID}
+      - API_HASH=${API_HASH}
+      - MONGODB_URI=${MONGODB_URI}
+      - ADMIN_IDS=${ADMIN_IDS}
+      - CHANNEL_ID=${CHANNEL_ID}
+      - INDEX_CHANNEL=${INDEX_CHANNEL}
+    volumes:
+      - ./bot.log:/app/bot.log
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpu: "0.5"
+          memory: "512Mi"
