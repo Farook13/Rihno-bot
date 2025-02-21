@@ -1,5 +1,4 @@
 from pyrogram import Client, filters
-from config import Config
 from handlers import start, filter, admin
 
 app = Client(
