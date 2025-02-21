@@ -1,32 +1,23 @@
-from pyrogram import Client, filters
-from handlers import start, filter, admin
+from pyrogram import Client, idle
+from config import Config
+from handlers import start, filter, admin  # Import handler modules
 
+# Initialize the bot with config values
 app = Client(
-    "AutoFilterBot",
+    "RihnoBot",
     api_id=Config.API_ID,
     api_hash=Config.API_HASH,
     bot_token=Config.BOT_TOKEN
 )
 
-# Register handlers
-@app.on_message(filters.command("start"))
-async def start_cmd(client, message):
-    await start.start_command(client, message)
-
-@app.on_message(filters.text & ~filters.command(["start", "add", "delete"]))
-async def filter_cmd(client, message):
-    await filter.filter_handler(client, message)
-
-# Admin commands
-@app.on_message(filters.command("add"))
-async def add_file_cmd(client, message):
-    await admin.add_file(client, message)
-
-@app.on_message(filters.command("delete"))
-async def delete_file_cmd(client, message):
-    await admin.delete_file(client, message)
+# Register handlers (assuming they define their own message handlers)
+start.register(app)
+filter.register(app)
+admin.register(app)
 
 if __name__ == "__main__":
-    print("Bot starting...")
-app = Bot()
-app.run()
+    print("Starting Rihno Bot...")
+    app.start()
+    idle()  # Keep the bot running
+    app.stop()
+    print("Rihno Bot stopped.")
