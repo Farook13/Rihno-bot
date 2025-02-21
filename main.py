@@ -29,4 +29,5 @@ async def delete_file_cmd(client, message):
 
 if __name__ == "__main__":
     print("Bot starting...")
+app = Bot()
 app.run()
