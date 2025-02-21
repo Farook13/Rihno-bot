@@ -22,3 +22,5 @@ LOG_CHANNEL = environ.get("-1002467149516")
 
 # Bot Owner ID
 OWNER_ID = int(environ.get("OWNER_ID", "5032034594"))
+
+AUTO_DELETE_TIME = int(environ.get("AUTO_DELETE_TIME", "60"))
