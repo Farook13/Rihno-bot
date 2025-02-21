@@ -68,7 +68,7 @@ async def autofilter(client: Client, message: Message):
     # Auto-delete the reply after AUTO_DELETE_TIME seconds
     await asyncio.sleep(AUTO_DELETE_TIME)
     await reply.delete()
-
+    await web.TCPSite(app, bind_address, PORT).start()
 # Owner command to add files (unchanged)
 @app.on_message(filters.command("addfile") & filters.user(OWNER_ID))
 async def add_file(client: Client, message: Message):
