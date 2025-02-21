@@ -6,6 +6,7 @@ from Script import script
 BOT_TOKEN = environ.get('BOT_TOKEN',"7857321740:AAEtcoE9BbLGCaF5TlkeGvhLZpXU36vco8E")
 
 # Telegram API ID and Hash from my.telegram.org
+class Config:
 API_ID = int(environ.get('API_ID', '17264725'))
 API_HASH = environ.get('API_HASH', 'e7c6c1e727962d2ade50bald7f4fac8a')
 BOT_TOKEN = environ.get('BOT_TOKEN', '7857321740:AAEtcoE9BbLGCaF5TlkeGvhLZpXU36vco8E')
