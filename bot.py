@@ -1,4 +1,5 @@
 import asyncio
+import random
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from config import BOT_TOKEN, API_ID, API_HASH, AUTH_CHANNEL, LOG_CHANNEL, OWNER_ID, AUTO_DELETE_TIME
@@ -11,7 +12,10 @@ app = Client("AutoFilterBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TO
 # MongoDB instance
 db = Database()
 
-# Start command
+# List of reaction emojis
+REACTIONS = ["😘", "🥳", "🤩", "💥", "🔥", "⚡️", "✨", "💎", "💗"]
+
+# Start command with random reaction
 @app.on_message(filters.command("start") & filters.private)
 async def start(client: Client, message: Message):
     user_id = message.from_user.id
@@ -24,8 +28,10 @@ async def start(client: Client, message: Message):
         )
         return
     
+    # Pick a random reaction emoji
+    reaction = random.choice(REACTIONS)
     reply = await message.reply_text(
-        "Welcome to the AutoFilter Bot! Send me a query to search for files."
+        f"Welcome to the AutoFilter Bot! Send me a query to search for files. {reaction}"
     )
     # Log user activity
     await client.send_message(LOG_CHANNEL, f"User {user_id} started the bot.")
@@ -33,7 +39,7 @@ async def start(client: Client, message: Message):
     await asyncio.sleep(AUTO_DELETE_TIME)
     await reply.delete()
 
-# Autofilter functionality
+# Autofilter functionality (unchanged)
 @app.on_message(filters.text & filters.private)
 async def autofilter(client: Client, message: Message):
     user_id = message.from_user.id
@@ -60,7 +66,7 @@ async def autofilter(client: Client, message: Message):
     await asyncio.sleep(AUTO_DELETE_TIME)
     await reply.delete()
 
-# Owner command to add files
+# Owner command to add files (unchanged)
 @app.on_message(filters.command("addfile") & filters.user(OWNER_ID))
 async def add_file(client: Client, message: Message):
     try:
