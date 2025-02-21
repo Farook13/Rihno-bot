@@ -57,3 +57,11 @@ async def autofilter(client: Client, message: Message):
     results = await asyncio.to_thread(db.search_files, query)
     if results:
         response = "Here
+if __name__ == "__main__":
+    # Check for command-line arguments
+    if len(sys.argv) > 1 and sys.argv[1].lower() == "help":
+        print_help()
+        sys.exit(0)
+    
+    # Default behavior: run the bot
+    app.run()
