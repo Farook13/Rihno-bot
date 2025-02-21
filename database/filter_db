@@ -1,0 +1,44 @@
+import logging
+from .database import Database
+
+logger = logging.getLogger('bot')
+
+class FilterDB(Database):
+    async def add_filter(self, file_id, movie_name, keywords):
+        try:
+            data = {
+                "file_id": file_id,
+                "movie_name": movie_name,
+                "keywords": keywords.lower().split(),
+            }
+            result = await self.collection.insert_one(data)
+            logger.debug(f"Added movie: {movie_name} with file_id: {file_id}")
+            return result
+        except Exception as e:
+            logger.error(f"Error adding movie {file_id}: {str(e)}", exc_info=True)
+            raise
+
+    async def get_file(self, query):
+        try:
+            search_terms = query.lower().split()
+            cursor = self.collection.find({
+                "$or": [
+                    {"keywords": {"$in": search_terms}},
+                    {"movie_name": {"$regex": query, "$options": "i"}}
+                ]
+            }).limit(10)
+            results = await cursor.to_list(length=10)
+            logger.debug(f"Found {len(results)} movies for query: {query}")
+            return results
+        except Exception as e:
+            logger.error(f"Error searching movies for {query}: {str(e)}", exc_info=True)
+            return []
+
+    async def delete_filter(self, file_id):
+        try:
+            result = await self.collection.delete_one({"file_id": file_id})
+            logger.debug(f"Deleted movie with file_id: {file_id}, count: {result.deleted_count}")
+            return result
+        except Exception as e:
+            logger.error(f"Error deleting movie {file_id}: {str(e)}", exc_info=True)
+            raise
