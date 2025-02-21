@@ -24,4 +24,6 @@ LOG_CHANNEL = environ.get('LOG_CHANNEL','-1002467149516')
 OWNER_ID = int(environ.get('OWNER_ID', '5032034594'))
 AUTO_DELETE_TIME = int(environ.get('AUTO_DELETE_TIME', '60'))
 
+
+PORT = int(environ.get('PORT', 8000))
 #
