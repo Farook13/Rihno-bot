@@ -80,5 +80,5 @@ async def add_file(client: Client, message: Message):
 
 # Run the bot
 if __name__ == "__main__":
-app=bot
+app = Bot()
 app.run()
