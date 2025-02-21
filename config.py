@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()  # Load environment variables from .env file
 
 # Telegram Bot Token from @BotFather
-
+class Config:
 # Telegram API ID and Hash from my.telegram.orgAPI_ID = int(environ.get('API_ID', '12618934'))
 API_ID = int(environ.get('API_ID', '12618934'))
 API_HASH = environ.get('API_HASH', '49aacd0bc2f8924add29fb02e20c8a16')
