@@ -5,16 +5,13 @@ from config import Config
 from database import Database
 from utils import check_force_sub
 
-# Preload reactions
 REACTIONS = ("😘", "🥳", "🤩", "💥", "🔥", "⚡️", "✨", "💎", "💗")
 
-# Validate credentials at startup
 if not all([Config.BOT_TOKEN, Config.API_ID, Config.API_HASH]):
-    print("Error: Missing Telegram API credentials (BOT_TOKEN, API_ID, or API_HASH)")
+    print("Critical Error: Missing Telegram API credentials (BOT_TOKEN, API_ID, or API_HASH)")
     exit(1)
 print(f"Credentials loaded: BOT_TOKEN={Config.BOT_TOKEN[:5]}..., API_ID={Config.API_ID}, API_HASH={Config.API_HASH[:5]}...")
 
-# Initialize bot and database
 app = Client(
     "RihnoBot",
     api_id=Config.API_ID,
@@ -24,15 +21,13 @@ app = Client(
 )
 db = Database()
 
-# Predefine responses and markup
 JOIN_CHANNEL_MARKUP = web.InlineKeyboardMarkup(
-    [[web.InlineKeyboardButton("Join Channel", url=f"https://t.me/+HgCVf61a04UyYmU1")]]
+    [[web.InlineKeyboardButton("Join Channel", url=f"https://t.me/{Config.AUTH_CHANNEL[4:]}")]]
 )
 JOIN_CHANNEL_TEXT = "Please join our channel to use this bot!"
 NO_FILES_TEXT = "No files found for your query."
 ADD_FILE_USAGE_TEXT = "Usage: /addfile <file_name> <file_link>"
 
-# Start command with debug logging
 @app.on_message(filters.command("start") & filters.private, group=0)
 async def start(client, message):
     user_id = message.from_user.id
@@ -52,7 +47,6 @@ async def start(client, message):
     except Exception as e:
         print(f"Error in start handler: {e}")
 
-# Autofilter with debug logging
 @app.on_message(filters.text & filters.private, group=1)
 async def filter_handler(client, message):
     user_id = message.from_user.id
@@ -73,7 +67,6 @@ async def filter_handler(client, message):
     except Exception as e:
         print(f"Error in filter handler: {e}")
 
-# Admin command with debug logging
 @app.on_message(filters.command("addfile") & filters.user(Config.OWNER_ID), group=2)
 async def add_file(client, message):
     user_id = message.from_user.id
@@ -91,7 +84,6 @@ async def add_file(client, message):
     except Exception as e:
         print(f"Error in add_file handler: {e}")
 
-# HTTP health check for Koyeb
 async def health_check(request):
     return web.Response(body=b"OK", status=200)
 
@@ -114,7 +106,7 @@ async def main():
     http_runner = await run_http_server()
     try:
         await app.start()
-        print("Bot started successfully")
+        print("Bot started successfully, listening for messages...")
         await idle()
     except Exception as e:
         print(f"Failed to start bot: {e}")
