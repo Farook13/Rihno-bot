@@ -1,87 +1,88 @@
 import asyncio
-import random
-from pyrogram import Client, filters, idle
 from aiohttp import web
+from pyrogram import Client, filters, idle
 from config import Config
 from database import Database
 from utils import check_force_sub
 
-# Telegram bot setup
-app = Client("RihnoBot", api_id=Config.API_ID, api_hash=Config.API_HASH, bot_token=Config.BOT_TOKEN)
-db = Database()
-REACTIONS = ["😘", "🥳", "🤩", "💥", "🔥", "⚡️", "✨", "💎", "💗"]
+# Preload reactions to avoid runtime list creation
+REACTIONS = ("😘", "🥳", "🤩", "💥", "🔥", "⚡️", "✨", "💎", "💗")
 
-# Start command
-@app.on_message(filters.command("start") & filters.private)
+# Initialize bot and database once, globally
+app = Client(
+    "RihnoBot",
+    api_id=Config.API_ID,
+    api_hash=Config.API_HASH,
+    bot_token=Config.BOT_TOKEN,
+    workers=4  # Optimize for small concurrency
+)
+db = Database()
+
+# Predefine common responses and markup to reduce runtime creation
+JOIN_CHANNEL_MARKUP = web.InlineKeyboardMarkup(
+    [[web.InlineKeyboardButton("Join Channel", url=f"https://t.me/{Config.AUTH_CHANNEL[4:]}")]]
+)
+JOIN_CHANNEL_TEXT = "Please join our channel to use this bot!"
+NO_FILES_TEXT = "No files found for your query."
+ADD_FILE_USAGE_TEXT = "Usage: /addfile <file_name> <file_link>"
+
+# Start command - Minimize overhead
+@app.on_message(filters.command("start") & filters.private, group=0)
 async def start(client, message):
     user_id = message.from_user.id
     if not await check_force_sub(client, user_id):
-        await message.reply_text(
-            "Please join our channel to use this bot!",
-            reply_markup=web.InlineKeyboardMarkup(
-                [[web.InlineKeyboardButton("Join Channel", url=f"https://t.me/{Config.AUTH_CHANNEL[4:]}")]]
-            )
-        )
+        await message.reply_text(JOIN_CHANNEL_TEXT, reply_markup=JOIN_CHANNEL_MARKUP)
         return
-    reaction = random.choice(REACTIONS)
+    reaction = REACTIONS[user_id % len(REACTIONS)]  # Deterministic choice for speed
     reply = await message.reply_text(f"Welcome to Rihno Bot! Send me a query to search for files. {reaction}")
-    await client.send_message(Config.LOG_CHANNEL, f"User {user_id} started the bot.")
-    await asyncio.sleep(Config.AUTO_DELETE_TIME)
-    await reply.delete()
+    await asyncio.gather(
+        client.send_message(Config.LOG_CHANNEL, f"User {user_id} started the bot."),
+        asyncio.sleep(Config.AUTO_DELETE_TIME, result=reply.delete())
+    )
 
-# Autofilter
-@app.on_message(filters.text & filters.private)
+# Autofilter - Optimize query and response
+@app.on_message(filters.text & filters.private, group=1)
 async def filter_handler(client, message):
     user_id = message.from_user.id
     if not await check_force_sub(client, user_id):
-        await message.reply_text(
-            "Please join our channel to use this bot!",
-            reply_markup=web.InlineKeyboardMarkup(
-                [[web.InlineKeyboardButton("Join Channel", url=f"https://t.me/{Config.AUTH_CHANNEL[4:]}")]]
-            )
-        )
+        await message.reply_text(JOIN_CHANNEL_TEXT, reply_markup=JOIN_CHANNEL_MARKUP)
         return
     query = message.text
-    results = await asyncio.to_thread(db.search_files, query)
-    if results:
-        response = "Here are the files I found:\n\n"
-        for idx, result in enumerate(results[:10], 1):
-            response += f"{idx}. {result['file_name']} - [Link]({result['file_link']})\n"
-        reply = await message.reply_text(response, disable_web_page_preview=True)
-    else:
-        reply = await message.reply_text("No files found for your query.")
-    await asyncio.sleep(Config.AUTO_DELETE_TIME)
-    await reply.delete()
+    results = await asyncio.to_thread(db.search_files, query)  # Offload to thread
+    reply = await message.reply_text(
+        "\n".join(f"{i}. {r['file_name']} - [Link]({r['file_link']})" for i, r in enumerate(results[:10], 1)) or NO_FILES_TEXT,
+        disable_web_page_preview=True
+    )
+    await asyncio.sleep(Config.AUTO_DELETE_TIME, result=reply.delete())
 
-# Admin command
-@app.on_message(filters.command("addfile") & filters.user(Config.OWNER_ID))
+# Admin command - Streamline processing
+@app.on_message(filters.command("addfile") & filters.user(Config.OWNER_ID), group=2)
 async def add_file(client, message):
     try:
-        _, file_name, file_link = message.text.split(maxsplit=2)
+        parts = message.text.split(maxsplit=2)
+        if len(parts) < 3:
+            await message.reply_text(ADD_FILE_USAGE_TEXT)
+            return
+        _, file_name, file_link = parts
         db.add_file(file_name, file_link)
         reply = await message.reply_text(f"Added {file_name} to the database!")
-        await asyncio.sleep(Config.AUTO_DELETE_TIME)
-        await reply.delete()
-    except ValueError:
-        await message.reply_text("Usage: /addfile <file_name> <file_link>")
+        await asyncio.sleep(Config.AUTO_DELETE_TIME, result=reply.delete())
+    except Exception as e:
+        await message.reply_text(f"Error: {e}")
 
-# Dummy HTTP server for Koyeb health check
+# Fast HTTP health check for Koyeb
 async def health_check(request):
-    return web.Response(text="OK", status=200)
+    return web.Response(body=b"OK", status=200)  # Use bytes for minimal overhead
 
 async def run_http_server():
-    try:
-        app_web = web.Application()
-        app_web.add_routes([web.get('/', health_check)])
-        runner = web.AppRunner(app_web)
-        await runner.setup()
-        site = web.TCPSite(runner, '0.0.0.0', 8000)
-        await site.start()
-        print("Health check server running on port 8000")
-        return runner  # Keep runner alive
-    except Exception as e:
-        print(f"Failed to start HTTP server: {e}")
-        raise
+    app_web = web.Application()
+    app_web.add_routes([web.get('/', health_check)])
+    runner = web.AppRunner(app_web, handle_signals=False)  # Reduce signal handling overhead
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', 8000, reuse_address=True)  # Enable port reuse
+    await site.start()
+    print("Health check server running on port 8000")
+    return runner
 
 async def main():
     print("Starting Rihno Bot...")
@@ -89,8 +90,6 @@ async def main():
     try:
         await app.start()
         await idle()
-    except Exception as e:
-        print(f"Failed to start bot: {e}")
     finally:
         await app.stop()
         await http_runner.cleanup()
