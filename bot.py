@@ -10,7 +10,7 @@ from utils import check_force_sub
 logger = logging.getLogger(__name__)
 
 # Initialize Pyrogram client
-app = Client("RihnoBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN, workers=4)
+app = Client("Rihno2k_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN, workers=4)
 db = Database()
 
 # Reaction emojis
