@@ -1,65 +1,19 @@
 {
-  "name": "Telegram AutoFilter Bot",
-  "description": "A Telegram bot that searches files from MongoDB with force subscribe, auto-delete, and fast responses.",
-  "repository": "https://github.com/yourusername/Telegram-AutoFilter-Bot",
-  "logo": "https://example.com/telegram-autofilter-bot-logo.png",
-  "keywords": ["telegram", "bot", "autofilter", "mongodb", "python"],
-  "website": "https://github.com/yourusername/Telegram-AutoFilter-Bot",
-  "success_url": "/",
-  "scripts": {
-    "postdeploy": "python populate_db.py"
-  },
+  "name": "RihnoBot",
+  "description": "Telegram autofilter bot",
   "env": {
-    "BOT_TOKEN": {
-      "description": "The Telegram Bot Token from @BotFather.",
-      "required": true
-    },
-    "API_ID": {
-      "description": "Telegram API ID from my.telegram.org.",
-      "required": true
-    },
-    "API_HASH": {
-      "description": "Telegram API Hash from my.telegram.org.",
-      "required": true
-    },
-    "DATABASE_URI": {
-      "description": "MongoDB connection string (e.g., from MongoDB Atlas).",
-      "required": true
-    },
-    "DATABASE_NAME": {
-      "description": "Name of the MongoDB database.",
-      "value": "AutoFilterBotDB",
-      "required": false
-    },
-    "AUTH_CHANNEL": {
-      "description": "Channel ID for force subscribe (e.g., -100123456789).",
-      "required": true
-    },
-    "LOG_CHANNEL": {
-      "description": "Channel ID for logging bot activities.",
-      "required": true
-    },
-    "OWNER_ID": {
-      "description": "Telegram user ID of the bot owner.",
-      "required": true
-    },
-    "AUTO_DELETE_TIME": {
-      "description": "Time in seconds before messages auto-delete.",
-      "value": "60",
-      "required": false
-    }
+    "API_ID": {"description": "Telegram API ID", "required": true},
+    "API_HASH": {"description": "Telegram API Hash", "required": true},
+    "BOT_TOKEN": {"description": "Telegram Bot Token", "required": true},
+    "MONGO_URI": {"description": "MongoDB URI", "required": true},
+    "DB_NAME": {"description": "MongoDB database name", "default": "RihnoBotDB"},
+    "CHANNEL_URL": {"description": "Channel URL", "required": true},
+    "ADMIN_IDS": {"description": "Comma-separated admin IDs", "required": true},
+    "AUTO_DELETE_TIME": {"description": "Message auto-delete time (seconds)", "default": "300"},
+    "INITIAL_CREDITS": {"description": "Initial user credits", "default": "10"}
   },
-  "stack": "heroku-22",
   "formation": {
-    "worker": {
-      "quantity": 1,
-      "size": "free"
-    }
+    "worker": {"quantity": 1, "size": "free"}
   },
-  "addons": [],
-  "buildpacks": [
-    {
-      "url": "heroku/python"
-    }
-  ]
+  "stack": "heroku-22"
 }
