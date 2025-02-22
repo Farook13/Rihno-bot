@@ -1,3 +1,4 @@
 pyrogram==2.0.106
 motor==3.3.2
+aiocache==0.12.2
 tgcrypto==1.2.5  # Added for faster encryption/decryption
