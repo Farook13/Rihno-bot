@@ -50,7 +50,6 @@ async def filter_handler(client, message):
     reply = await message.reply_text(response, parse_mode="Markdown", disable_web_page_preview=True)
     await asyncio.sleep(Config.AUTO_DELETE_TIME)
     await reply.delete()
-        return
     
     query = message.text.strip().lower()
     results = await db.search_files(query)
