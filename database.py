@@ -1,12 +1,7 @@
 import motor.motor_asyncio
+from aiocache import cached  # Add this import
 from config import Config
 
-
-class Database:
-    @cached(ttl=60)  # Cache for 60 seconds
-    async def search_files(self, query):
-        cursor = self.files.find({"file_name": {"$regex": query, "$options": "i"}}).limit(10)
-        return [doc async for doc in cursor]
 class Database:
     def __init__(self):
         self.client = motor.motor_asyncio.AsyncIOMotorClient(Config.MONGO_URI)
@@ -14,6 +9,7 @@ class Database:
         self.files = self.db[Config.FILE_COLLECTION]
         self.users = self.db[Config.USER_COLLECTION]
 
+    @cached(ttl=60)  # Cache for 60 seconds
     async def search_files(self, query):
         cursor = self.files.find({"file_name": {"$regex": query, "$options": "i"}}).limit(10)
         return [doc async for doc in cursor]
