@@ -1,19 +1,19 @@
 import asyncio
 import random
-from pyrogram import Client, filters, idle
+import logging
+from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from config import BOT_TOKEN, API_ID, API_HASH, OWNER_ID, AUTO_DELETE_TIME, AUTH_CHANNEL
 from database import Database
 from utils import check_force_sub
 
-# Initialize bot
+logger = logging.getLogger(__name__)
+
 app = Client("Rihno2k_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN, workers=4)
 db = Database()
 
-# Reaction emojis
 REACTIONS = ["🔥", "✨", "😍", "🌝", "💥", "⚡️", "🎉", "🎊", "🪄", "💗", "❤️", "💞", "💛", "💖", "💙", "❤️‍🩹", "❤️‍🔥", "💎", "🧨", "💣"]
 
-# Predefined responses
 JOIN_CHANNEL_TEXT = "Please join our channel to use this bot!"
 CHANNEL_URL = "https://t.me/+your_channel"  # Replace with your actual channel invite link
 JOIN_CHANNEL_MARKUP = InlineKeyboardMarkup([[InlineKeyboardButton("Join Channel", url=CHANNEL_URL)]])
@@ -107,7 +107,7 @@ async def index_file(client, message):
         await asyncio.sleep(AUTO_DELETE_TIME)
         await reply.delete()
     except Exception as e:
-        print(f"Indexing error: {e}")
+        logger.error(f"Indexing error: {e}")
         await message.reply_text(f"Error: {str(e)}")
 
 @app.on_message(filters.command("credits") & filters.private)
@@ -134,16 +134,5 @@ async def add_credits(client, message):
         await asyncio.sleep(AUTO_DELETE_TIME)
         await reply.delete()
     except Exception as e:
-        print(f"Add credits error: {e}")
+        logger.error(f"Add credits error: {e}")
         await message.reply_text(f"Error: {str(e)}")
-
-async def main():
-    print("Starting Rihno2k_bot...")
-    await app.start()
-    await idle()
-    await app.stop()
-    await db.close()
-    print("Rihno2k_bot stopped.")
-
-if __name__ == "__main__":
-    asyncio.run(main())
