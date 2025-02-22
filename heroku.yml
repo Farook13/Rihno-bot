@@ -1,20 +1,5 @@
 build:
   docker:
-    web: Dockerfile
-
+    worker: Dockerfile
 run:
-  web: python main.py
-
-release:
-  image: web
-
-environment:
-  BOT_TOKEN: ${BOT_TOKEN}
-  API_ID: ${API_ID}
-  API_HASH: ${API_HASH}
-  MONGODB_URI: ${MONGODB_URI}
-  ADMIN_IDS: ${ADMIN_IDS}
-  CHANNEL_ID: ${CHANNEL_ID}
-  INDEX_CHANNEL: ${INDEX_CHANNEL}
-
-stack: container
+  worker: python main.py
