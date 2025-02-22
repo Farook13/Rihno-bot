@@ -1,103 +1,158 @@
 import asyncio
-from aiohttp import web
+import logging
+import random
 from pyrogram import Client, filters, idle
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from config import Config
 from database import Database
-from utils import check_force_sub
 
-# Preload reactions to avoid runtime list creation
-REACTIONS = ("😘", "🥳", "🤩", "💥", "🔥", "⚡️", "✨", "💎", "💗")
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Initialize bot with TgCrypto support (automatically used when installed via requirements.txt)
+# Initialize bot client
 app = Client(
     "RihnoBot",
     api_id=Config.API_ID,
     api_hash=Config.API_HASH,
     bot_token=Config.BOT_TOKEN,
-    workers=4  # Optimized for small concurrency, TgCrypto speeds up encryption
+    workers=4
 )
+
+# Initialize database
 db = Database()
 
-# Predefine common responses and markup to reduce runtime creation
-JOIN_CHANNEL_MARKUP = web.InlineKeyboardMarkup(
-    [[web.InlineKeyboardButton("Join Channel", url=f"https://t.me/+HgCVf61a04UyYmU1")]]
-)
-JOIN_CHANNEL_TEXT = "Please join our channel to use this bot!"
-NO_FILES_TEXT = "No files found for your query."
-ADD_FILE_USAGE_TEXT = "Usage: /addfile <file_name> <file_link>"
+# Reaction emojis
+REACTIONS = [
+    "🔥", "✨", "😍", "🌝", "💥", "⚡️", "🎉", "🎊", "🪄", "💗",
+    "❤️", "💞", "💛", "💖", "💙", "❤️‍🩹", "❤️‍🔥", "💎", "🧨", "💣"
+]
 
-# Start command - Minimize overhead
-@app.on_message(filters.command("start") & filters.private, group=0)
+# Predefined responses
+JOIN_CHANNEL_TEXT = "Please join our channel to use this bot!"
+JOIN_CHANNEL_MARKUP = InlineKeyboardMarkup(
+    [[InlineKeyboardButton("Join Channel", url=Config.CHANNEL_URL)]]
+)
+NO_FILES_TEXT = "No files found for your query."
+INDEX_USAGE_TEXT = "Usage: /index <file_name> <file_link>"
+LOW_CREDITS_TEXT = "Insufficient credits! You need at least 1 credit to search."
+
+# Start command with random reaction
+@app.on_message(filters.command("start") & filters.private)
 async def start(client, message):
     user_id = message.from_user.id
     if not await check_force_sub(client, user_id):
         await message.reply_text(JOIN_CHANNEL_TEXT, reply_markup=JOIN_CHANNEL_MARKUP)
         return
-    reaction = REACTIONS[user_id % len(REACTIONS)]  # Deterministic choice for speed
-    reply = await message.reply_text(f"Welcome to Rihno Bot! Send me a query to search for files. {reaction}")
-    await asyncio.gather(
-        client.send_message(Config.LOG_CHANNEL, f"User {user_id} started the bot."),
-        asyncio.sleep(Config.AUTO_DELETE_TIME, result=reply.delete())
+    
+    reaction = random.choice(REACTIONS)
+    welcome_text = (
+        f"*Welcome to RihnoBot!* {reaction}\n"
+        f"Search files, check credits with /credits, or index files if you're an admin! _{reaction}_"
     )
+    
+    await db.ensure_user(user_id)  # Ensure user exists in DB
+    reply = await message.reply_text(welcome_text, parse_mode="Markdown")
+    await asyncio.sleep(Config.AUTO_DELETE_TIME)
+    await reply.delete()
 
-# Autofilter - Optimize query and response
-@app.on_message(filters.text & filters.private, group=1)
+# Autofilter handler with credit check
+@app.on_message(filters.text & filters.private)
 async def filter_handler(client, message):
     user_id = message.from_user.id
     if not await check_force_sub(client, user_id):
         await message.reply_text(JOIN_CHANNEL_TEXT, reply_markup=JOIN_CHANNEL_MARKUP)
         return
-    query = message.text
-    results = await asyncio.to_thread(db.search_files, query)  # Offload to thread
-    reply = await message.reply_text(
-        "\n".join(f"{i}. {r['file_name']} - [Link]({r['file_link']})" for i, r in enumerate(results[:10], 1)) or NO_FILES_TEXT,
-        disable_web_page_preview=True
-    )
-    await asyncio.sleep(Config.AUTO_DELETE_TIME, result=reply.delete())
+    
+    credits = await db.get_user_credits(user_id)
+    if credits < 1:
+        reply = await message.reply_text(LOW_CREDITS_TEXT)
+        await asyncio.sleep(Config.AUTO_DELETE_TIME)
+        await reply.delete()
+        return
+    
+    query = message.text.strip().lower()
+    results = await db.search_files(query)
+    
+    if results:
+        response = "\n".join(
+            f"{i}. [{r['file_name']}]({r['file_link']})" 
+            for i, r in enumerate(results[:10], 1)
+        )
+        await db.update_user_credits(user_id, -1)  # Deduct 1 credit
+    else:
+        response = NO_FILES_TEXT
+    
+    reply = await message.reply_text(response, parse_mode="Markdown", disable_web_page_preview=True)
+    await asyncio.sleep(Config.AUTO_DELETE_TIME)
+    await reply.delete()
 
-# Admin command - Streamline processing
-@app.on_message(filters.command("addfile") & filters.user(Config.OWNER_ID), group=2)
-async def add_file(client, message):
+# Index files (admin only)
+@app.on_message(filters.command("index") & filters.user(Config.ADMIN_IDS))
+async def index_file(client, message):
     try:
         parts = message.text.split(maxsplit=2)
         if len(parts) < 3:
-            await message.reply_text(ADD_FILE_USAGE_TEXT)
+            reply = await message.reply_text(INDEX_USAGE_TEXT)
+            await asyncio.sleep(Config.AUTO_DELETE_TIME)
+            await reply.delete()
             return
+        
         _, file_name, file_link = parts
-        db.add_file(file_name, file_link)
-        reply = await message.reply_text(f"Added {file_name} to the database!")
-        await asyncio.sleep(Config.AUTO_DELETE_TIME, result=reply.delete())
+        await db.add_file(file_name, file_link)
+        reply = await message.reply_text(f"Indexed: *{file_name}* successfully! ✨")
+        await asyncio.sleep(Config.AUTO_DELETE_TIME)
+        await reply.delete()
     except Exception as e:
-        await message.reply_text(f"Error: {e}")
+        logger.error(f"Indexing error: {e}")
+        await message.reply_text(f"Error: {str(e)}")
 
-# Fast HTTP health check for Koyeb
-async def health_check(request):
-    return web.Response(body=b"OK", status=200)  # Use bytes for minimal overhead
+# Check user credits
+@app.on_message(filters.command("credits") & filters.private)
+async def check_credits(client, message):
+    user_id = message.from_user.id
+    credits = await db.get_user_credits(user_id)
+    reply = await message.reply_text(f"Your credits: *{credits}* ⭐")
+    await asyncio.sleep(Config.AUTO_DELETE_TIME)
+    await reply.delete()
 
-async def run_http_server():
+# Admin command to add credits
+@app.on_message(filters.command("addcredits") & filters.user(Config.ADMIN_IDS))
+async def add_credits(client, message):
     try:
-        app_web = web.Application()
-        app_web.add_routes([web.get('/', health_check)])
-        runner = web.AppRunner(app_web, handle_signals=False)  # Reduce signal handling overhead
-        await runner.setup()
-        site = web.TCPSite(runner, '0.0.0.0', 8000, reuse_address=True)  # Enable port reuse
-        await site.start()
-        print("Health check server running on port 8000")
-        return runner
+        parts = message.text.split(maxsplit=2)
+        if len(parts) < 3 or not parts[1].isdigit():
+            reply = await message.reply_text("Usage: /addcredits <user_id> <amount>")
+            await asyncio.sleep(Config.AUTO_DELETE_TIME)
+            await reply.delete()
+            return
+        
+        _, target_user_id, amount = parts
+        target_user_id = int(target_user_id)
+        amount = int(amount)
+        
+        await db.update_user_credits(target_user_id, amount)
+        reply = await message.reply_text(f"Added {amount} credits to user {target_user_id}! 💰")
+        await asyncio.sleep(Config.AUTO_DELETE_TIME)
+        await reply.delete()
     except Exception as e:
-        print(f"Failed to start HTTP server: {e}")
-        raise
+        logger.error(f"Add credits error: {e}")
+        await message.reply_text(f"Error: {str(e)}")
+
+# Force subscription check (placeholder)
+async def check_force_sub(client, user_id):
+    return True  # Replace with real logic if needed
 
 async def main():
-    print("Starting Rihno Bot...")
-    http_runner = await run_http_server()  # Start HTTP server first
-    try:
-        await app.start()
-        await idle()
-    finally:
-        await app.stop()
-        await http_runner.cleanup()
-        print("Rihno Bot stopped.")
+    logger.info("Starting RihnoBot...")
+    await app.start()
+    await idle()
+    await app.stop()
+    await db.close()
+    logger.info("RihnoBot stopped.")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Bot stopped by user.")
