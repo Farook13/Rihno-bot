@@ -1,6 +1,6 @@
 import motor.motor_asyncio
 from config import Config
-from aiocache import cached
+
 
 class Database:
     @cached(ttl=60)  # Cache for 60 seconds
