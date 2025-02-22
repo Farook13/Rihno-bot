@@ -22,7 +22,7 @@ app = Client(
 db = Database()
 
 JOIN_CHANNEL_MARKUP = web.InlineKeyboardMarkup(
-    [[web.InlineKeyboardButton("Join Channel", url=f"https://t.me/{Config.AUTH_CHANNEL[4:]}")]]
+    [[web.InlineKeyboardButton("Join Channel", url=f"https://t.me/+25IeZwi2SgNlYWI1")]]
 )
 JOIN_CHANNEL_TEXT = "Please join our channel to use this bot!"
 NO_FILES_TEXT = "No files found for your query."
