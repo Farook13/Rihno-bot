@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import logging.config  # Add this import
 from aiohttp import web
 from bot import app, db
 
