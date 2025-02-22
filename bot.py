@@ -1,17 +1,21 @@
 import asyncio
 from aiohttp import web
 from pyrogram import Client, filters, idle
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton  # Correct import
 from config import Config
 from database import Database
 from utils import check_force_sub
 
+# Preload reactions
 REACTIONS = ("😘", "🥳", "🤩", "💥", "🔥", "⚡️", "✨", "💎", "💗")
 
+# Validate credentials at startup
 if not all([Config.BOT_TOKEN, Config.API_ID, Config.API_HASH]):
     print("Critical Error: Missing Telegram API credentials (BOT_TOKEN, API_ID, or API_HASH)")
     exit(1)
 print(f"Credentials loaded: BOT_TOKEN={Config.BOT_TOKEN[:5]}..., API_ID={Config.API_ID}, API_HASH={Config.API_HASH[:5]}...")
 
+# Initialize bot and database
 app = Client(
     "RihnoBot",
     api_id=Config.API_ID,
@@ -21,8 +25,9 @@ app = Client(
 )
 db = Database()
 
-JOIN_CHANNEL_MARKUP = web.InlineKeyboardMarkup(
-    [[web.InlineKeyboardButton("Join Channel", url=f"https://t.me/+25IeZwi2SgNlYWI1")]]
+# Predefine responses and markup with correct Pyrogram types
+JOIN_CHANNEL_MARKUP = InlineKeyboardMarkup(
+    [[InlineKeyboardButton("Join Channel", url=f"https://t.me/{Config.AUTH_CHANNEL[4:]}")]]
 )
 JOIN_CHANNEL_TEXT = "Please join our channel to use this bot!"
 NO_FILES_TEXT = "No files found for your query."
