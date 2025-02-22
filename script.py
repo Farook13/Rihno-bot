@@ -8,13 +8,13 @@ from utils import check_force_sub
 # Preload reactions to avoid runtime list creation
 REACTIONS = ("😘", "🥳", "🤩", "💥", "🔥", "⚡️", "✨", "💎", "💗")
 
-# Initialize bot and database once, globally
+# Initialize bot with TgCrypto support (automatically used when installed via requirements.txt)
 app = Client(
     "RihnoBot",
     api_id=Config.API_ID,
     api_hash=Config.API_HASH,
     bot_token=Config.BOT_TOKEN,
-    workers=4  # Optimize for small concurrency
+    workers=4  # Optimized for small concurrency, TgCrypto speeds up encryption
 )
 db = Database()
 
@@ -75,14 +75,18 @@ async def health_check(request):
     return web.Response(body=b"OK", status=200)  # Use bytes for minimal overhead
 
 async def run_http_server():
-    app_web = web.Application()
-    app_web.add_routes([web.get('/', health_check)])
-    runner = web.AppRunner(app_web, handle_signals=False)  # Reduce signal handling overhead
-    await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', 8000, reuse_address=True)  # Enable port reuse
-    await site.start()
-    print("Health check server running on port 8000")
-    return runner
+    try:
+        app_web = web.Application()
+        app_web.add_routes([web.get('/', health_check)])
+        runner = web.AppRunner(app_web, handle_signals=False)  # Reduce signal handling overhead
+        await runner.setup()
+        site = web.TCPSite(runner, '0.0.0.0', 8000, reuse_address=True)  # Enable port reuse
+        await site.start()
+        print("Health check server running on port 8000")
+        return runner
+    except Exception as e:
+        print(f"Failed to start HTTP server: {e}")
+        raise
 
 async def main():
     print("Starting Rihno Bot...")
