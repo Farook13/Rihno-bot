@@ -12,7 +12,6 @@ app = Client("AutoFilterBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TO
 # MongoDB instance
 db = Database()
 
-PORT = "8000"
 
 # List of reaction emojis
 REACTIONS = ["😘", "🥳", "🤩", "💥", "🔥", "⚡️", "✨", "💎", "💗"]
