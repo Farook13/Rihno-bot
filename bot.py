@@ -1,86 +1,103 @@
 import asyncio
-import random
-from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from config import BOT_TOKEN, API_ID, API_HASH, AUTH_CHANNEL, LOG_CHANNEL, OWNER_ID, AUTO_DELETE_TIME
+from aiohttp import web
+from pyrogram import Client, filters, idle
+from config import Config
 from database import Database
 from utils import check_force_sub
 
-# Initialize the bot
-app = Client("AutoFilterBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+# Preload reactions for efficiency
+REACTIONS = ("😘", "🥳", "🤩", "💥", "🔥", "⚡️", "✨", "💎", "💗")
 
-# MongoDB instance
+# Initialize bot with TgCrypto support (via requirements.txt) and minimal workers
+app = Client(
+    "RihnoBot",
+    api_id=Config.API_ID,
+    api_hash=Config.API_HASH,
+    bot_token=Config.BOT_TOKEN,
+    workers=4  # Optimized for low concurrency, TgCrypto boosts encryption speed
+)
 db = Database()
 
+# Predefine responses and markup to avoid runtime creation
+JOIN_CHANNEL_MARKUP = web.InlineKeyboardMarkup(
+    [[web.InlineKeyboardButton("Join Channel", url=f"https://t.me/{Config.AUTH_CHANNEL[4:]}")]]
+)
+JOIN_CHANNEL_TEXT = "Please join our channel to use this bot!"
+NO_FILES_TEXT = "No files found for your query."
+ADD_FILE_USAGE_TEXT = "Usage: /addfile <file_name> <file_link>"
 
-# List of reaction emojis
-REACTIONS = ["😘", "🥳", "🤩", "💥", "🔥", "⚡️", "✨", "💎", "💗"]
-
-# Start command with random reaction
-@app.on_message(filters.command("start") & filters.private)
-async def start(client: Client, message: Message):
+# Start command - Fast and streamlined
+@app.on_message(filters.command("start") & filters.private, group=0)
+async def start(client, message):
     user_id = message.from_user.id
     if not await check_force_sub(client, user_id):
-        await message.reply_text(
-            "Please join our channel to use this bot!",
-            reply_markup=InlineKeyboardMarkup(
-                [[InlineKeyboardButton("Join Channel", url=f"https://t.me/batmanmoviehub
-                ")]]
-            )
-        )
+        await message.reply_text(JOIN_CHANNEL_TEXT, reply_markup=JOIN_CHANNEL_MARKUP)
         return
-    
-    # Pick a random reaction emoji
-    reaction = random.choice(REACTIONS)
-    reply = await message.reply_text(
-        f"Welcome to the AutoFilter Bot! Send me a query to search for files. {reaction}"
+    reaction = REACTIONS[user_id % len(REACTIONS)]  # Deterministic for speed
+    reply = await message.reply_text(f"Welcome to Rihno Bot! Send me a query to search for files. {reaction}")
+    await asyncio.gather(
+        client.send_message(Config.LOG_CHANNEL, f"User {user_id} started the bot."),
+        asyncio.sleep(Config.AUTO_DELETE_TIME, result=reply.delete())
     )
-    # Log user activity
-    await client.send_message(LOG_CHANNEL, f"User {user_id} started the bot.")
-    # Auto-delete the welcome message after AUTO_DELETE_TIME seconds
-    await asyncio.sleep(AUTO_DELETE_TIME)
-    await reply.delete()
 
-# Autofilter functionality (unchanged)
-@app.on_message(filters.text & filters.private)
-async def autofilter(client: Client, message: Message):
+# Autofilter - Optimized query and response
+@app.on_message(filters.text & filters.private, group=1)
+async def filter_handler(client, message):
     user_id = message.from_user.id
     if not await check_force_sub(client, user_id):
-        await message.reply_text(
-            "Please join our channel to use this bot!",
-            reply_markup=InlineKeyboardMarkup(
-                [[InlineKeyboardButton("Join Channel", url=f"https://t.me/{AUTH_CHANNEL[4:]}")]]
-            )
-        )
+        await message.reply_text(JOIN_CHANNEL_TEXT, reply_markup=JOIN_CHANNEL_MARKUP)
         return
-    
     query = message.text
-    results = await asyncio.to_thread(db.search_files, query)  # Offload to thread for performance
-    if results:
-        response = "Here are the files I found:\n\n"
-        for idx, result in enumerate(results[:10], 1):  # Limit to 10 results
-            response += f"{idx}. {result['file_name']} - [Link]({result['file_link']})\n"
-        reply = await message.reply_text(response, disable_web_page_preview=True)
-    else:
-        reply = await message.reply_text("No files found for your query.")
-    
-    # Auto-delete the reply after AUTO_DELETE_TIME seconds
-    await asyncio.sleep(AUTO_DELETE_TIME)
-    await reply.delete()
-    await web.TCPSite(app, bind_address, PORT).start()
-# Owner command to add files (unchanged)
-@app.on_message(filters.command("addfile") & filters.user(OWNER_ID))
-async def add_file(client: Client, message: Message):
+    results = await asyncio.to_thread(db.search_files, query)  # Non-blocking
+    reply = await message.reply_text(
+        "\n".join(f"{i}. {r['file_name']} - [Link]({r['file_link']})" for i, r in enumerate(results[:10], 1)) or NO_FILES_TEXT,
+        disable_web_page_preview=True
+    )
+    await asyncio.sleep(Config.AUTO_DELETE_TIME, result=reply.delete())
+
+# Admin command - Efficient processing
+@app.on_message(filters.command("addfile") & filters.user(Config.OWNER_ID), group=2)
+async def add_file(client, message):
     try:
-        _, file_name, file_link = message.text.split(maxsplit=2)
+        parts = message.text.split(maxsplit=2)
+        if len(parts) < 3:
+            await message.reply_text(ADD_FILE_USAGE_TEXT)
+            return
+        _, file_name, file_link = parts
         db.add_file(file_name, file_link)
         reply = await message.reply_text(f"Added {file_name} to the database!")
-        await asyncio.sleep(AUTO_DELETE_TIME)
-        await reply.delete()
-    except ValueError:
-        await message.reply_text("Usage: /addfile <file_name> <file_link>")
+        await asyncio.sleep(Config.AUTO_DELETE_TIME, result=reply.delete())
+    except Exception as e:
+        await message.reply_text(f"Error: {e}")
 
-# Run the bot
+# Fast HTTP health check for Koyeb
+async def health_check(request):
+    return web.Response(body=b"OK", status=200)  # Bytes for minimal latency
+
+async def run_http_server():
+    try:
+        app_web = web.Application()
+        app_web.add_routes([web.get('/', health_check)])
+        runner = web.AppRunner(app_web, handle_signals=False)  # Lightweight runner
+        await runner.setup()
+        site = web.TCPSite(runner, '0.0.0.0', 8000, reuse_address=True)  # Fast binding
+        await site.start()
+        print("Health check server running on port 8000")
+        return runner
+    except Exception as e:
+        print(f"Failed to start HTTP server: {e}")
+        raise
+
+async def main():
+    print("Starting Rihno Bot...")
+    http_runner = await run_http_server()  # Start HTTP server first
+    try:
+        await app.start()
+        await idle()
+    finally:
+        await app.stop()
+        await http_runner.cleanup()
+        print("Rihno Bot stopped.")
+
 if __name__ == "__main__":
-app = Bot()
-app.run()
+    asyncio.run(main())
