@@ -1,16 +1,23 @@
-# Telegram AutoFilter Bot
-
-A Telegram bot that searches files from a MongoDB database with force subscribe, auto-delete, and fast response (within 3 seconds).
+# RihnoBot
+A Telegram autofilter bot with file indexing and user credits.
 
 ## Features
-- **Autofilter**: Search files stored in MongoDB by sending a query.
-- **Force Subscribe**: Users must join a specified channel to use the bot.
-- **Auto-Delete**: Messages are deleted after a configurable time (default: 60 seconds).
-- **Fast Response**: Optimized to reply within 3 seconds.
-- **Utilities**: Example command (`/addfile`) for the owner to add files.
+- Random reactions on `/start`.
+- Autofilter files from MongoDB.
+- Admin file indexing with `/index`.
+- User credits system.
 
 ## Setup
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/Telegram-AutoFilter-Bot.git
-   cd Telegram-AutoFilter-Bot
+1. Clone the repo: `git clone https://github.com/yourusername/RihnoBot.git`
+2. Install dependencies: `pip install -r requirements.txt`
+3. Copy `.env.example` to `.env` and fill in your values.
+4. Run: `python main.py`
+
+## Deployment
+- **Docker**: `docker build -t rihnobot . && docker run -d rihnobot`
+- **Heroku**: Push to Heroku with `Procfile` and `app.json`.
+- **Render**: Use `render.yaml`.
+- **Okteto**: Use `okteto-compose.yml`.
+
+## License
+MIT
