@@ -20,7 +20,7 @@ db = Database()
 
 # Predefine common responses and markup to reduce runtime creation
 JOIN_CHANNEL_MARKUP = web.InlineKeyboardMarkup(
-    [[web.InlineKeyboardButton("Join Channel", url=f"https://t.me/{Config.AUTH_CHANNEL[4:]}")]]
+    [[web.InlineKeyboardButton("Join Channel", url=f"https://t.me/+HgCVf61a04UyYmU1")]]
 )
 JOIN_CHANNEL_TEXT = "Please join our channel to use this bot!"
 NO_FILES_TEXT = "No files found for your query."
