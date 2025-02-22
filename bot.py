@@ -35,18 +35,21 @@ async def start(client, message):
     await asyncio.sleep(Config.AUTO_DELETE_TIME)
     await reply.delete()
 
-@app.on_message(filters.text & filters.private)
 async def filter_handler(client, message):
     user_id = message.from_user.id
-    if not await check_force_sub(client, user_id):
-        await message.reply_text(JOIN_CHANNEL_TEXT, reply_markup=JOIN_CHANNEL_MARKUP)
-        return
-    
+    # ... (force sub check)
     credits = await db.get_user_credits(user_id)
     if credits < 1:
-        reply = await message.reply_text(LOW_CREDITS_TEXT)
-        await asyncio.sleep(Config.AUTO_DELETE_TIME)
-        await reply.delete()
+        # ... (low credits response)
+        return
+    query = message.text.strip().lower()
+    results = await db.search_files(query)
+    response = "\n".join(f"{i}. [{r['file_name']}]({r['file_link']})" for i, r in enumerate(results[:10], 1)) if results else NO_FILES_TEXT
+    if results:
+        asyncio.create_task(db.update_user_credits(user_id, -1))  # Async task, non-blocking
+    reply = await message.reply_text(response, parse_mode="Markdown", disable_web_page_preview=True)
+    await asyncio.sleep(Config.AUTO_DELETE_TIME)
+    await reply.delete()
         return
     
     query = message.text.strip().lower()
