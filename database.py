@@ -1,25 +1,42 @@
-from pymongo import MongoClient
+import pymongo
+import asyncio
 from config import Config
 
 class Database:
     def __init__(self):
-        try:
-            self.client = MongoClient(Config.DATABASE_URI, serverSelectionTimeoutMS=2000)
-            self.db = self.client[Config.DATABASE_NAME]
-            self.files_collection = self.db["files"]
-            self.files_collection.create_index("file_name")
-        except Exception as e:
-            print(f"Failed to connect to MongoDB: {e}")
-            self.files_collection = None
+        self.client = pymongo.MongoClient(Config.MONGO_URI)
+        self.db = self.client[Config.DB_NAME]
+        self.files = self.db[Config.FILE_COLLECTION]
+        self.users = self.db[Config.USER_COLLECTION]
 
-    def add_file(self, file_name: str, file_link: str):
-        if self.files_collection:
-            self.files_collection.insert_one({"file_name": file_name, "file_link": file_link})
+    async def search_files(self, query):
+        loop = asyncio.get_running_loop()
+        results = await loop.run_in_executor(None, self._search_files_sync, query)
+        return results
 
-    def search_files(self, query: str):
-        if self.files_collection:
-            return list(self.files_collection.find(
-                {"file_name": {"$regex": query, "$options": "i"}},
-                {"_id": 0}
-            ).limit(10))
-        return []  # Return empty list if no database connection
+    def _search_files_sync(self, query):
+        return list(self.files.find({"file_name": {"$regex": query, "$options": "i"}}).limit(10))
+
+    async def add_file(self, file_name, file_link):
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, self.files.insert_one, {"file_name": file_name, "file_link": file_link})
+
+    async def ensure_user(self, user_id):
+        loop = asyncio.get_running_loop()
+        user = await loop.run_in_executor(None, self.users.find_one, {"user_id": user_id})
+        if not user:
+            await loop.run_in_executor(None, self.users.insert_one, {"user_id": user_id, "credits": Config.INITIAL_CREDITS})
+
+    async def get_user_credits(self, user_id):
+        loop = asyncio.get_running_loop()
+        user = await loop.run_in_executor(None, self.users.find_one, {"user_id": user_id})
+        return user["credits"] if user else 0
+
+    async def update_user_credits(self, user_id, amount):
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(
+            None, self.users.update_one, {"user_id": user_id}, {"$inc": {"credits": amount}}, upsert=True
+        )
+
+    async def close(self):
+        self.client.close()
