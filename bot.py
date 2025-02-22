@@ -9,6 +9,13 @@ from utils import check_force_sub
 # Preload reactions
 REACTIONS = ("😘", "🥳", "🤩", "💥", "🔥", "⚡️", "✨", "💎", "💗")
 
+# Example for Python/Telebot
+print("Bot is alive and listening...")
+@bot.message_handler(commands=['start'])
+def handle_start(message):
+    print("Received /start command!")
+    bot.reply_to(message, "Hello from Rihno Bot!")
+
 # Validate credentials at startup
 if not all([Config.BOT_TOKEN, Config.API_ID, Config.API_HASH]):
     print("Critical Error: Missing Telegram API credentials (BOT_TOKEN, API_ID, or API_HASH)")
