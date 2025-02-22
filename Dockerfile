@@ -1,13 +1,10 @@
-FROM python:3.10.8-slim-buster
+FROM python:3.9-slim
 
-RUN apt update && apt upgrade -y
-RUN apt install git -y
-COPY requirements.txt /requirements.txt
+WORKDIR /app
 
-RUN cd /
-RUN pip3 install -U pip && pip3 install -U -r requirements.txt
-WORKDIR /Rihno-bot
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["python3", "bot.py"]
+CMD ["python", "main.py"]
