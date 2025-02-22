@@ -18,11 +18,13 @@ REACTIONS = ["🔥", "✨", "😍", "🌝", "💥", "⚡️", "🎉", "🎊", "�
 
 # Predefined responses
 JOIN_CHANNEL_TEXT = "Please join our channel to use this bot!"
-JOIN_CHANNEL_MARKUP = InlineKeyboardMarkup([[InlineKeyboardButton("Join Channel", url=AUTH_CHANNEL)]])
+CHANNEL_URL = "https://t.me/+your_channel"  # Replace with your actual channel invite link
+JOIN_CHANNEL_MARKUP = InlineKeyboardMarkup([[InlineKeyboardButton("Join Channel", url=CHANNEL_URL)]])
 NO_FILES_TEXT = "No files found for your query."
 INDEX_USAGE_TEXT = "Usage: /index <file_name> <file_link>"
 LOW_CREDITS_TEXT = "Insufficient credits! You need at least 1 credit to search."
 
+# Start command with self-introduction and options
 @app.on_message(filters.command("start") & filters.private)
 async def start(client, message):
     user_id = message.from_user.id
@@ -31,13 +33,47 @@ async def start(client, message):
         return
     
     reaction = random.choice(REACTIONS)
-    welcome_text = f"*Welcome to RihnoBot!* {reaction}\nSearch files or use /credits to check your balance! _{reaction}_"
+    welcome_text = (
+        f"*Hello! I’m RihnoBot!* {reaction}\n"
+        f"I’m here to help you find files with an autofilter system. "
+        f"My creator is <a href='tg://user?id={OWNER_ID}'>my owner</a>, the genius behind my code! "
+        f"Use me to search files, check credits, or add me to your group.\n\n"
+        f"What would you like to do? _{reaction}_"
+    )
+    
+    # Inline buttons for options
+    start_buttons = InlineKeyboardMarkup([
+        [InlineKeyboardButton("Add to Group", url=f"https://t.me/RihnoBot?startgroup=true")],
+        [InlineKeyboardButton("Support", url="https://t.me/+your_support_channel"),  # Replace with support link
+         InlineKeyboardButton("Help", callback_data="help")]
+    ])
     
     await db.ensure_user(user_id)
-    reply = await message.reply_text(welcome_text, parse_mode="Markdown")
+    reply = await message.reply_text(
+        welcome_text,
+        parse_mode="HTML",  # Use HTML for mention link
+        reply_markup=start_buttons,
+        disable_web_page_preview=True
+    )
     await asyncio.sleep(AUTO_DELETE_TIME)
     await reply.delete()
 
+# Callback handler for inline buttons
+@app.on_callback_query(filters.regex("help"))
+async def help_callback(client, callback_query):
+    help_text = (
+        "*RihnoBot Help*\n"
+        "Here’s what I can do:\n"
+        "- Search files by typing a query.\n"
+        "- /credits: Check your credits.\n"
+        "- /index <file_name> <file_link>: Add files (admin only).\n"
+        "- /addcredits <user_id> <amount>: Add credits (admin only).\n"
+        "Enjoy! ✨"
+    )
+    await callback_query.answer()
+    await callback_query.message.edit_text(help_text, parse_mode="Markdown")
+
+# Autofilter handler
 @app.on_message(filters.text & filters.private)
 async def filter_handler(client, message):
     user_id = message.from_user.id
@@ -63,6 +99,7 @@ async def filter_handler(client, message):
     await asyncio.sleep(AUTO_DELETE_TIME)
     await reply.delete()
 
+# Index files (admin only)
 @app.on_message(filters.command("index") & filters.user(OWNER_ID))
 async def index_file(client, message):
     try:
@@ -81,6 +118,7 @@ async def index_file(client, message):
         logger.error(f"Indexing error: {e}")
         await message.reply_text(f"Error: {str(e)}")
 
+# Check user credits
 @app.on_message(filters.command("credits") & filters.private)
 async def check_credits(client, message):
     user_id = message.from_user.id
@@ -89,6 +127,7 @@ async def check_credits(client, message):
     await asyncio.sleep(AUTO_DELETE_TIME)
     await reply.delete()
 
+# Admin command to add credits
 @app.on_message(filters.command("addcredits") & filters.user(OWNER_ID))
 async def add_credits(client, message):
     try:
