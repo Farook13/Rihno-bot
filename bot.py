@@ -18,7 +18,7 @@ REACTIONS = ["🔥", "✨", "😍", "🌝", "💥", "⚡️", "🎉", "🎊", "�
 
 # Predefined responses
 JOIN_CHANNEL_TEXT = "Please join our channel to use this bot!"
-JOIN_CHANNEL_MARKUP = InlineKeyboardMarkup([[InlineKeyboardButton("Join Channel", url=CHANNEL_URL)]])
+JOIN_CHANNEL_MARKUP = InlineKeyboardMarkup([[InlineKeyboardButton("Join Channel", url=AUTH_CHANNEL)]])
 NO_FILES_TEXT = "No files found for your query."
 INDEX_USAGE_TEXT = "Usage: /index <file_name> <file_link>"
 LOW_CREDITS_TEXT = "Insufficient credits! You need at least 1 credit to search."
