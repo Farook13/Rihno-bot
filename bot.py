@@ -38,7 +38,7 @@ async def web_server():
     app.router.add_get('/', hello)
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', PORT)  # Use PORT from config
+    site = web.TCPSite(runner, '0.0.0.0', 8000)  # Use PORT from config
     await site.start()
     return runner
 
