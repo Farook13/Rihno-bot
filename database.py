@@ -25,6 +25,10 @@ class Database:
             ]
         }).limit(10)
 
+    def get_file_by_name(self, file_name):
+        """Retrieve a single file by its exact file name."""
+        return self.collection.find_one({"file_name": file_name})
+
     def close(self):
         """Close the MongoDB connection."""
         self.client.close()
