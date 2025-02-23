@@ -1,4 +1,4 @@
-​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​import asyncio
+import asyncio
 import logging
 import logging.config
 from aiohttp import web
@@ -20,12 +20,12 @@ REACTIONS = ("😘", "🥳", "🤩", "💥", "🔥", "⚡️", "✨", "💎", "�
 class Bot(Client):
     def __init__(self):
         super().__init__(
-            "rihno_bot",  # Added session name to fix the TypeError
+            "rihno_bot",
             api_id=Config.API_ID,
             api_hash=Config.API_HASH,
             bot_token=Config.BOT_TOKEN,
             workers=50,
-            plugins={"root": "LuciferMoringstar_Robot"},  # Placeholder, adjust if needed
+            plugins={"root": "LuciferMoringstar_Robot"},
             sleep_threshold=5,
         )
         self.username = None
