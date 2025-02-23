@@ -37,7 +37,10 @@ AUTH_CHANNEL = int(environ.get('AUTH_CHANNEL', '-1002289409354')) if environ.get
 LOG_CHANNEL = int(environ.get('LOG_CHANNEL', '-1002467149516'))
 REQUEST_CHANNEL = environ.get('REQUEST_CHANNEL', 'https://t.me/subit23')
 SUPPORT_CHAT = environ.get('SUPPORT_CHAT', 'https://t.me/batmanmoviehub')
-
+# config.py
+FORCE_SUB_CHANNELS = ["@YourChannel1", "@YourChannel2"]  # Your channel usernames
+OMDB_API_KEY = "your_omdb_api_key_here"  # From http://www.omdbapi.com/
+​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
 # MongoDB Information
 DATABASE_URI = environ.get ('DATABASE_URI', "mongodb+srv://saidalimuhamed88:iladias2025@cluster0.qt4dv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 DATABASE_NAME = environ.get('DATABASE_NAME', "Cluster0")
