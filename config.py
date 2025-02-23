@@ -4,7 +4,7 @@ from os import environ
 class Config:
     BOT_TOKEN = environ.get('BOT_TOKEN','7857321740:AAEtcoE9BbLGCaF5TlkeGvhLZpXU36vco8E')
     API_ID = int(environ.get('API_ID', '12618934'))
-    API_HASH = environ.get('API_HASH''49aacd0bc2f8924add29fb02e20c8a16')
+    API_HASH = environ.get('API_HASH','49aacd0bc2f8924add29fb02e20c8a16')
     SESSION = environ.get('SESSION', 'RihnoBot')  # Added from new code
     DATABASE_URI = environ.get('DATABASE_URI', 'mongodb+srv://saidalimuhamed88:iladias2025@cluster0.qt4dv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
     DATABASE_NAME = environ.get('DATABASE_NAME', 'Cluster0')
