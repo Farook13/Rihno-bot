@@ -12,8 +12,8 @@ class Database:
      existing = self.collection.find_one({"file_id": file_data["file_id"]})
  if not existing:
      self.collection.insert_one(file_data)
-     return True
-     return False
+    return True
+    return False
 
  def search_files(self, query):
      return self.collection.find({
