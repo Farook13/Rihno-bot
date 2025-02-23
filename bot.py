@@ -1,148 +1,128 @@
 import asyncio
-import random
-import logging
-from pyrogram import Client, filters
+from aiohttp import web
+from pyrogram import Client, filters, idle
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from config import BOT_TOKEN, API_ID, API_HASH, OWNER_ID, AUTO_DELETE_TIME, AUTH_CHANNEL
+from config import Config
 from database import Database
 from utils import check_force_sub
 
-logger = logging.getLogger(__name__)
+# Preload reactions for efficiency
+REACTIONS = ("😘", "🥳", "🤩", "💥", "🔥", "⚡️", "✨", "💎", "💗")
 
-# Initialize Pyrogram client
-app = Client("Rihno2k_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN, workers=4)
+# Validate credentials at startup
+if not all([Config.BOT_TOKEN, Config.API_ID, Config.API_HASH]):
+    print("Critical Error: Missing Telegram API credentials (BOT_TOKEN, API_ID, or API_HASH)")
+    exit(1)
+print(f"Credentials loaded: BOT_TOKEN={Config.BOT_TOKEN[:5]}..., API_ID={Config.API_ID}, API_HASH={Config.API_HASH[:5]}...")
+
+# Initialize bot and database
+app = Client(
+    "RihnoBot",
+    api_id=Config.API_ID,
+    api_hash=Config.API_HASH,
+    bot_token=Config.BOT_TOKEN,
+    workers=4  # Optimized for low concurrency with TgCrypto
+)
 db = Database()
 
-# Reaction emojis
-REACTIONS = ["🔥", "✨", "😍", "🌝", "💥", "⚡️", "🎉", "🎊", "🪄", "💗", "❤️", "💞", "💛", "💖", "💙", "❤️‍🩹", "❤️‍🔥", "💎", "🧨", "💣"]
-
-# Predefined responses
+# Predefine responses and markup
+JOIN_CHANNEL_MARKUP = InlineKeyboardMarkup(
+    [[InlineKeyboardButton("Join Channel", url=f"https://t.me/{Config.AUTH_CHANNEL[4:]}")]]
+)
 JOIN_CHANNEL_TEXT = "Please join our channel to use this bot!"
-CHANNEL_URL = "https://t.me/+your_channel"  # Replace with your actual channel invite link
-JOIN_CHANNEL_MARKUP = InlineKeyboardMarkup([[InlineKeyboardButton("Join Channel", url=CHANNEL_URL)]])
 NO_FILES_TEXT = "No files found for your query."
-INDEX_USAGE_TEXT = "Usage: /index <file_name> <file_link>"
-LOW_CREDITS_TEXT = "Insufficient credits! You need at least 1 credit to search."
+ADD_FILE_USAGE_TEXT = "Usage: /addfile <file_name> <file_link>"
 
-# Start command with self-introduction and options
-@app.on_message(filters.command("start") & filters.private)
+# Start command with debug logging
+@app.on_message(filters.command("start") & filters.private, group=0)
 async def start(client, message):
     user_id = message.from_user.id
-    if not await check_force_sub(client, user_id):
-        await message.reply_text(JOIN_CHANNEL_TEXT, reply_markup=JOIN_CHANNEL_MARKUP)
-        return
-    
-    reaction = random.choice(REACTIONS)
-    welcome_text = (
-        f"*Hello! I’m RihnoBot!* {reaction}\n"
-        f"I’m here to help you find files with an autofilter system. "
-        f"My creator is <a href='tg://user?id={OWNER_ID}'>my owner</a>, the genius behind my code! "
-        f"Use me to search files, check credits, or add me to your group.\n\n"
-        f"What would you like to do? _{reaction}_"
-    )
-    
-    # Inline buttons for options
-    start_buttons = InlineKeyboardMarkup([
-        [InlineKeyboardButton("Add to Group", url=f"https://t.me/RihnoBot?startgroup=true")],
-        [InlineKeyboardButton("Support", url="https://t.me/+your_support_channel"),  # Replace with support link
-         InlineKeyboardButton("Help", callback_data="help")]
-    ])
-    
-    await db.ensure_user(user_id)
-    reply = await message.reply_text(
-        welcome_text,
-        parse_mode="HTML",  # Use HTML for mention link
-        reply_markup=start_buttons,
-        disable_web_page_preview=True
-    )
-    await asyncio.sleep(AUTO_DELETE_TIME)
-    await reply.delete()
+    print(f"Received /start from user {user_id}")
+    try:
+        if not await check_force_sub(client, user_id):
+            print(f"User {user_id} not subscribed to {Config.AUTH_CHANNEL}")
+            await message.reply_text(JOIN_CHANNEL_TEXT, reply_markup=JOIN_CHANNEL_MARKUP)
+            return
+        reaction = REACTIONS[user_id % len(REACTIONS)]
+        print(f"Sending welcome to {user_id} with reaction {reaction}")
+        reply = await message.reply_text(f"Welcome to Rihno Bot! Send me a query to search for files. {reaction}")
+        await asyncio.gather(
+            client.send_message(Config.LOG_CHANNEL, f"User {user_id} started the bot."),
+            asyncio.sleep(Config.AUTO_DELETE_TIME, result=reply.delete())
+        )
+    except Exception as e:
+        print(f"Error in start handler: {e}")
 
-# Callback handler for inline buttons
-@app.on_callback_query(filters.regex("help"))
-async def help_callback(client, callback_query):
-    help_text = (
-        "*RihnoBot Help*\n"
-        "Here’s what I can do:\n"
-        "- Search files by typing a query.\n"
-        "- /credits: Check your credits.\n"
-        "- /index <file_name> <file_link>: Add files (admin only).\n"
-        "- /addcredits <user_id> <amount>: Add credits (admin only).\n"
-        "Enjoy! ✨"
-    )
-    await callback_query.answer()
-    await callback_query.message.edit_text(help_text, parse_mode="Markdown")
-
-# Autofilter handler
-@app.on_message(filters.text & filters.private)
+# Autofilter with debug logging
+@app.on_message(filters.text & filters.private, group=1)
 async def filter_handler(client, message):
     user_id = message.from_user.id
-    if not await check_force_sub(client, user_id):
-        await message.reply_text(JOIN_CHANNEL_TEXT, reply_markup=JOIN_CHANNEL_MARKUP)
-        return
-    
-    credits = await db.get_user_credits(user_id)
-    if credits < 1:
-        reply = await message.reply_text(LOW_CREDITS_TEXT)
-        await asyncio.sleep(AUTO_DELETE_TIME)
-        await reply.delete()
-        return
-    
-    query = message.text.strip().lower()
-    results = await db.search_files(query)
-    response = "\n".join(f"{i}. [{r['file_name']}]({r['file_link']})" for i, r in enumerate(results[:10], 1)) if results else NO_FILES_TEXT
-    
-    if results:
-        await db.update_user_credits(user_id, -1)
-    
-    reply = await message.reply_text(response, parse_mode="Markdown", disable_web_page_preview=True)
-    await asyncio.sleep(AUTO_DELETE_TIME)
-    await reply.delete()
+    print(f"Received text query from {user_id}: {message.text}")
+    try:
+        if not await check_force_sub(client, user_id):
+            print(f"User {user_id} not subscribed to {Config.AUTH_CHANNEL}")
+            await message.reply_text(JOIN_CHANNEL_TEXT, reply_markup=JOIN_CHANNEL_MARKUP)
+            return
+        query = message.text
+        results = await asyncio.to_thread(db.search_files, query)
+        print(f"Found {len(results)} results for '{query}'")
+        reply = await message.reply_text(
+            "\n".join(f"{i}. {r['file_name']} - [Link]({r['file_link']})" for i, r in enumerate(results[:10], 1)) or NO_FILES_TEXT,
+            disable_web_page_preview=True
+        )
+        await asyncio.sleep(Config.AUTO_DELETE_TIME, result=reply.delete())
+    except Exception as e:
+        print(f"Error in filterPOINTS handler: {e}")
 
-# Index files (admin only)
-@app.on_message(filters.command("index") & filters.user(OWNER_ID))
-async def index_file(client, message):
+# Admin command with debug logging
+@app.on_message(filters.command("addfile") & filters.user(Config.OWNER_ID), group=2)
+async def add_file(client, message):
+    user_id = message.from_user.id
+    print(f"Received /addfile from {user_id}: {message.text}")
     try:
         parts = message.text.split(maxsplit=2)
         if len(parts) < 3:
-            reply = await message.reply_text(INDEX_USAGE_TEXT)
-            await asyncio.sleep(AUTO_DELETE_TIME)
-            await reply.delete()
+            await message.reply_text(ADD_FILE_USAGE_TEXT)
             return
         _, file_name, file_link = parts
-        await db.add_file(file_name, file_link)
-        reply = await message.reply_text(f"Indexed: *{file_name}* successfully! ✨")
-        await asyncio.sleep(AUTO_DELETE_TIME)
-        await reply.delete()
+        db.add_file(file_name, file_link)
+        print(f"Added file: {file_name}")
+        reply = await message.reply_text(f"Added {file_name} to the database!")
+        await asyncio.sleep(Config.AUTO_DELETE_TIME, result=reply.delete())
     except Exception as e:
-        logger.error(f"Indexing error: {e}")
-        await message.reply_text(f"Error: {str(e)}")
+        print(f"Error in add_file handler: {e}")
 
-# Check user credits
-@app.on_message(filters.command("credits") & filters.private)
-async def check_credits(client, message):
-    user_id = message.from_user.id
-    credits = await db.get_user_credits(user_id)
-    reply = await message.reply_text(f"Your credits: *{credits}* ⭐")
-    await asyncio.sleep(AUTO_DELETE_TIME)
-    await reply.delete()
+# HTTP health check for Koyeb
+async def health_check(request):
+    return web.Response(body=b"OK", status=200)
 
-# Admin command to add credits
-@app.on_message(filters.command("addcredits") & filters.user(OWNER_ID))
-async def add_credits(client, message):
+async def run_http_server():
     try:
-        parts = message.text.split(maxsplit=2)
-        if len(parts) < 3 or not parts[1].isdigit():
-            reply = await message.reply_text("Usage: /addcredits <user_id> <amount>")
-            await asyncio.sleep(AUTO_DELETE_TIME)
-            await reply.delete()
-            return
-        _, target_user_id, amount = parts
-        target_user_id, amount = int(target_user_id), int(amount)
-        await db.update_user_credits(target_user_id, amount)
-        reply = await message.reply_text(f"Added {amount} credits to user {target_user_id}! 💰")
-        await asyncio.sleep(AUTO_DELETE_TIME)
-        await reply.delete()
+        app_web = web.Application()
+        app_web.add_routes([web.get('/', health_check)])
+        runner = web.AppRunner(app_web, handle_signals=False)
+        await runner.setup()
+        site = web.TCPSite(runner, '0.0.0.0', 8000, reuse_address=True)
+        await site.start()
+        print("Health check server running on port 8000")
+        return runner
     except Exception as e:
-        logger.error(f"Add credits error: {e}")
-        await message.reply_text(f"Error: {str(e)}")
+        print(f"Failed to start HTTP server: {e}")
+        raise
+
+async def main():
+    print("Starting Rihno Bot...")
+    http_runner = await run_http_server()
+    try:
+        await app.start()
+        print("Bot started successfully, listening for messages...")
+        await idle()
+    except Exception as e:
+        print(f"Failed to start bot: {e}")
+    finally:
+        await app.stop()
+        await http_runner.cleanup()
+        print("Rihno Bot stopped.")
+
+if __name__ == "__main__":
+    asyncio.run(main())
