@@ -1,3 +1,4 @@
+# plugins/web_server.py
 from aiohttp import web
 
 async def web_server():
@@ -6,8 +7,8 @@ async def web_server():
     
     app = web.Application()
     app.router.add_get('/', hello)
-    return app
-
-# To actually run the server, you would typically add:
-# if __name__ == '__main__':
-#     web.run_app(web_server())
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', 8000)  # Port 8000 hardcoded
+    await site.start()
+    return runner
