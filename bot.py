@@ -11,7 +11,7 @@ from database import Database
 from utils import check_force_sub
 
 # Configure logging
-logging.config.fileConfig('logging.conf')  # Requires logging.conf
+logging.config.fileConfig('logging.conf')
 logging.getLogger().setLevel(logging.ERROR)
 
 # Preload reactions
@@ -24,7 +24,7 @@ class Bot(Client):
             api_id=Config.API_ID,
             api_hash=Config.API_HASH,
             bot_token=Config.BOT_TOKEN,
-            workers=50,  # From new code
+            workers=50,
             plugins={"root": "LuciferMoringstar_Robot"},  # Placeholder, adjust if needed
             sleep_threshold=5,
         )
@@ -32,7 +32,6 @@ class Bot(Client):
 
     async def start(self):
         await super().start()
-        # Removed Media.ensure_indexes(), relying on database.py initialization
         me = await self.get_me()
         self.username = '@' + me.username
         print(f"{me.first_name} with Pyrogram v{__version__} (Layer {layer}) started on {self.username}.")
@@ -42,8 +41,17 @@ class Bot(Client):
         print("Bot stopped. Bye.")
 
 # Initialize bot and database
-if not all([Config.BOT_TOKEN, Config.API_ID, Config.API_HASH, Config.SESSION]):
-    print("Critical Error: Missing required credentials (BOT_TOKEN, API_ID, API_HASH, or SESSION)")
+missing = []
+if not Config.BOT_TOKEN:
+    missing.append("BOT_TOKEN")
+if not Config.API_ID:
+    missing.append("API_ID")
+if not Config.API_HASH:
+    missing.append("API_HASH")
+if not Config.SESSION:
+    missing.append("SESSION")
+if missing:
+    print(f"Critical Error: Missing required credentials: {', '.join(missing)}")
     exit(1)
 print(f"Credentials loaded: BOT_TOKEN={Config.BOT_TOKEN[:5]}..., API_ID={Config.API_ID}, API_HASH={Config.API_HASH[:5]}..., SESSION={Config.SESSION}")
 
