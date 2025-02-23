@@ -2,7 +2,7 @@ import os
 from os import environ
 
 class Config:
-    BOT_TOKEN = environ.get('BOT_TOKEN,'7857321740:AAEtcoE9BbLGCaF5TlkeGvhLZpXU36vco8E')
+    BOT_TOKEN = environ.get('BOT_TOKEN','7857321740:AAEtcoE9BbLGCaF5TlkeGvhLZpXU36vco8E')
     API_ID = int(environ.get('API_ID', '12618934'))
     API_HASH = environ.get('API_HASH','49aacd0bc2f8924add29fb02e20c8a16')
     SESSION = environ.get('SESSION', 'RihnoBot')  # Added from new code
