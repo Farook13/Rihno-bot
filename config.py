@@ -2,7 +2,7 @@ import os
 from os import environ
 
 class Config:
-    BOT_TOKEN = environ.get('BOT_TOKEN','7955983025:AAFqrIti8CrhCvPTY0IKV2qu4xnxF96sL40')
+    BOT_TOKEN = environ.get('BOT_TOKEN','7857321740:AAHSUfjwO3w6Uffmxm9vCUMl36FtXl5-r6w')
     API_ID = int(environ.get('API_ID', '12618934'))
     API_HASH = environ.get('API_HASH','49aacd0bc2f8924add29fb02e20c8a16')
     SESSION = environ.get('SESSION', 'RihnoBot')  # Added from new code
@@ -13,7 +13,7 @@ class Config:
     OWNER_ID = int(environ.get('OWNER_ID', '5032034594'))
     AUTO_DELETE_TIME = int(environ.get('AUTO_DELETE_TIME', '30'))
 # If not using a class, ensure no stray block starters
-BOT_TOKEN = environ.get('BOT_TOKEN','7955983025:AAFqrIti8CrhCvPTY0IKV2qu4xnxF96sL40')
+BOT_TOKEN = environ.get('BOT_TOKEN','7857321740:AAHSUfjwO3w6Uffmxm9vCUMl36FtXl5-r6w')
 API_ID = int(environ.get('API_ID', '12618934'))
 API_HASH = environ.get('API_HASH','49aacd0bc2f8924add29fb02e20c8a16')
 SESSION = environ.get('SESSION', 'RihnoBot')  # Added from new code
