@@ -9,10 +9,10 @@ import pyromod.listen
 from config import Config
 from database import Database
 from utils import check_force_sub
-from LuciferMoringstar_Robot import Media  # Assuming this is a custom module
+from LuciferMoringstar_Robot import Media  # Assuming this module exists
 
 # Configure logging
-logging.config.fileConfig('logging.conf')  # Requires logging.conf in repo
+logging.config.fileConfig('logging.conf')  # Requires logging.conf
 logging.getLogger().setLevel(logging.ERROR)
 
 # Preload reactions
@@ -25,15 +25,15 @@ class Bot(Client):
             api_id=Config.API_ID,
             api_hash=Config.API_HASH,
             bot_token=Config.BOT_TOKEN,
-            workers=50,  # From new code, increased concurrency
-            plugins={"root": "LuciferMoringstar_Robot"},  # Custom plugins
+            workers=50,  # From new code
+            plugins={"root": "LuciferMoringstar_Robot"},
             sleep_threshold=5,
         )
-        self.username = None  # Set in start()
+        self.username = None
 
     async def start(self):
         await super().start()
-        await Media.ensure_indexes()  # MongoDB indexing from new code
+        await Media.ensure_indexes()  # From new code, assumes Media exists
         me = await self.get_me()
         self.username = '@' + me.username
         print(f"{me.first_name} with Pyrogram v{__version__} (Layer {layer}) started on {self.username}.")
