@@ -77,4 +77,3 @@ LOG_STR += ("IMDB enabled.\n" if IMDB else "IMDB disabled.\n")
 LOG_STR += (f"Custom caption: {CUSTOM_FILE_CAPTION}\n" if CUSTOM_FILE_CAPTION else "Default captions used.\n")
 LOG_STR += ("Spell check enabled.\n" if SPELL_CHECK_REPLY else "Spell check disabled.\n")
 LOG_STR += (f"Auto-delete after {DELETE_TIME} seconds.\n" if AUTO_DELETE else "Auto-delete disabled.\n")
-​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
