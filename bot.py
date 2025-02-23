@@ -39,10 +39,10 @@ async def web_server():
     app.router.add_get('/', hello)
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', 8000)  # Hardcoded port 8000
+    site = web.TCPSite(runner, '0.0.0.0', '8000')  # Hardcoded port 8000
     await site.start()
     return runner
-
+PORT="8000"
 async def start_bot():
     print('\nStarting Telegram Movie Bot...')
     bot_info = await bot.get_me()
