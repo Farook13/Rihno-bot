@@ -38,7 +38,6 @@ class Database:
         except Exception as e:
             LOGGER.error(f"Error retrieving file {file_name}: {str(e)}")
             return None
-        
       def close(self):
         """Close the MongoDB connection."""
         self.client.close()
