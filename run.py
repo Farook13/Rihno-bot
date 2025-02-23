@@ -1,5 +1,4 @@
-from main import main
-import asyncio
-
-if __name__ == "__main__":
-    asyncio.run(main())
+# Simple wrapper to run the bot
+import os
+os.system("bash start.sh")
+​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
