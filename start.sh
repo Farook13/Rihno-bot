@@ -1,11 +1,16 @@
 #!/bin/bash
-
-# Exit on any error
 set -e
-
-# Echo a startup message
 echo "Starting the Telegram Movie Bot..."
-
+ls -la  # List files to confirm presence
+python3 --version  # Confirm Python version
+pip3 list  # Confirm installed packages
+if [ -f "bot.py" ]; then
+    python3 bot.py
+else
+    echo "bot.py not found!"
+    exit 1
+fi
+​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
 # Check if Python is installed
 if ! command -v python3 &> /dev/null; then
     echo "Python3 is not installed. Please install it first."
