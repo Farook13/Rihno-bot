@@ -1,15 +1,10 @@
-version: "3"
+version: "3.8"
 services:
   bot:
     build: .
-    command: python script.py
-    environment:
-      - API_ID=${API_ID}
-      - API_HASH=${API_HASH}
-      - BOT_TOKEN=${BOT_TOKEN}
-      - MONGO_URI=${MONGO_URI}
-      - DB_NAME=${DB_NAME}
-      - CHANNEL_URL=${CHANNEL_URL}
-      - ADMIN_IDS=${ADMIN_IDS}
-      - AUTO_DELETE_TIME=${AUTO_DELETE_TIME}
-      - INITIAL_CREDITS=${INITIAL_CREDITS}
+    command: bash start.sh
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
