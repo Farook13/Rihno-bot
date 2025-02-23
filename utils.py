@@ -1,14 +1,9 @@
-from pyrogram.errors import UserNotParticipant
-from aiocache import cached
+from pyrogram import Client
 from config import Config
 
-@cached(ttl=300)  # Cache for 5 minutes
-async def check_force_sub(client, user_id):
+async def check_force_sub(client: Client, user_id: int) -> bool:
     try:
-        await client.get_chat_member(Config.FORCE_SUB_CHANNEL, user_id)
-        return True
-    except UserNotParticipant:
-        return False
-    except Exception as e:
-        print(f"Force sub check failed: {e}")
+        member = await client.get_chat_member(int(Config.AUTH_CHANNEL), user_id)
+        return member.status in ["member", "administrator", "creator"]
+    except Exception:
         return False
