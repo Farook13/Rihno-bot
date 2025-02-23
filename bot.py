@@ -39,18 +39,23 @@ async def web_server():
     app.router.add_get('/', hello)
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', '8000')  # Hardcoded port 8000
+    site = web.TCPSite(runner, '0.0.0.0', 8000)  # Port 8000 hardcoded
     await site.start()
     return runner
-PORT="8000"
+
 async def start_bot():
     print('\nStarting Telegram Movie Bot...')
     bot_info = await bot.get_me()
     temp.U_NAME = bot_info.username
-    temp.B_NAME = bot_info.first_name
+    temp.B_NAME = bot_info.first_name or "Batman2"  # Match your logs
     bot.username = f'@{bot_info.username}'
     LOGGER.info(f"{temp.B_NAME} started with Pyrogram on @{temp.U_NAME}")
-    LOGGER.info(LOG_STR)
+    LOGGER.info("Bot Configuration:\n"
+                "IMDB enabled.\n"
+                "Custom caption: <b>{file_caption}</b>\n"
+                "Size: {file_size}\n"
+                "Uploaded by {SUPPORT_CHAT}\n"
+                "Auto-delete after 600 seconds.")
 
 @bot.on_message(filters.command("start"))
 async def start(client: Client, message: Message):
@@ -90,20 +95,18 @@ async def search(client: Client, message: Message):
     await message.reply_text(response)
 
 async def main():
-    # Start web server if on Heroku/Koyeb
-    web_runner = None
-    if ON_HEROKU:  # Assuming ON_HEROKU is in your config
-        web_runner = await web_server()
-        LOGGER.info("Web server started on port 8000")  # Updated log message
+    # Start web server regardless of platform to ensure health checks pass
+    web_runner = await web_server()
+    LOGGER.info("Web server started on port 8000")
 
     try:
         # Attempt to start bot with flood wait handling
         while True:
             try:
                 await bot.start()
-                break  # Exit loop if successful
+                break
             except FloodWait as e:
-                wait_time = e.value  # Get wait time in seconds
+                wait_time = e.value
                 LOGGER.warning(f"Flood wait triggered. Waiting {wait_time} seconds...")
                 await asyncio.sleep(wait_time)
             except Exception as e:
@@ -111,16 +114,17 @@ async def main():
                 raise
 
         await start_bot()
-        LOGGER.info("Connected to MongoDB")  # Assuming this is logged by Database
+        LOGGER.info("Connected to MongoDB")
         await idle()  # Keeps bot running
     except Exception as e:
         LOGGER.error(f"An error occurred: {str(e)}", exc_info=True)
     finally:
-        # Check if bot is still running before stopping
-        if bot.is_initialized and not bot.is_stopped:
+        # Simplified shutdown without is_stopped check
+        try:
             await bot.stop()
-        if web_runner:
-            await web_runner.cleanup()
+        except Exception as e:
+            LOGGER.error(f"Error stopping bot: {str(e)}", exc_info=True)
+        await web_runner.cleanup()
         db.close()
         LOGGER.info("Bot stopped.")
 
@@ -130,6 +134,8 @@ if __name__ == "__main__":
         loop.run_until_complete(main())
     except KeyboardInterrupt:
         LOGGER.info("Received interrupt, shutting down...")
+    except Exception as e:
+        LOGGER.error(f"Main loop error: {str(e)}", exc_info=True)
     finally:
         if not loop.is_closed():
             loop.close()
