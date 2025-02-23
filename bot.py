@@ -37,12 +37,7 @@ async def start_bot():
  bot.username = f'@{bot_info.username}'
 
  # Web server setup (optional, for Heroku/Render compatibility)
- if ON_HEROKU:
- app = web.AppRunner(await web_server())
- await app.setup()
- bind_address = "0.0.0.0"
- await web.TCPSite(app, bind_address, PORT).start()
-
+ 
  LOGGER.info(f"{temp.B_NAME} started with Pyrogram on @{temp.U_NAME}")
  LOGGER.info(LOG_STR)
 
