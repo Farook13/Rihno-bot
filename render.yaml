@@ -1,9 +1,9 @@
 services:
   - type: worker
-    name: rihnobot
+    name: telegram-movie-bot
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python script.py
+    startCommand: bash start.sh
     envVars:
       - key: API_ID
         sync: false
@@ -11,15 +11,6 @@ services:
         sync: false
       - key: BOT_TOKEN
         sync: false
-      - key: MONGO_URI
+      - key: DATABASE_URI
         sync: false
-      - key: DB_NAME
-        value: RihnoBotDB
-      - key: CHANNEL_URL
-        sync: false
-      - key: ADMIN_IDS
-        sync: false
-      - key: AUTO_DELETE_TIME
-        value: 300
-      - key: INITIAL_CREDITS
-        value: 10
+​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
