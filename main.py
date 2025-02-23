@@ -3,3 +3,4 @@ from bot import main
 
 if __name__ == "__main__":
     main()
+PORT='8000'
