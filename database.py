@@ -26,4 +26,3 @@ class Database:
     def close(self):
         self.client.close()
         LOGGER.info("MongoDB connection closed.")
-​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
