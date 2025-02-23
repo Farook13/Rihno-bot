@@ -3,7 +3,6 @@ import random
 import logging
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from config import BOT_TOKEN, API_ID, API_HASH, OWNER_ID, AUTO_DELETE_TIME, AUTH_CHANNEL
 from database import Database
 from utils import check_force_sub
 
