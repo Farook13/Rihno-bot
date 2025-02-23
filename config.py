@@ -15,11 +15,11 @@ id_pattern = re.compile(r'^.\d+$')
 
 def is_enabled(value, default):
  if value.lower() in ["true", "yes", "1", "enable", "y"]:
- return True
+     return True
  elif value.lower() in ["false", "no", "0", "disable", "n"]:
- return False
+     return False
  else:
- return default
+     return default
 
 # Bot Information
 API_ID = int(environ.get('API_ID', '12618934'))
