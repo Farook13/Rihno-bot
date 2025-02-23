@@ -20,7 +20,6 @@ REACTIONS = ("😘", "🥳", "🤩", "💥", "🔥", "⚡️", "✨", "💎", "�
 class Bot(Client):
     def __init__(self):
         super().__init__(
-            session_name=Config.SESSION,
             api_id=Config.API_ID,
             api_hash=Config.API_HASH,
             bot_token=Config.BOT_TOKEN,
@@ -48,12 +47,10 @@ if not Config.API_ID:
     missing.append("API_ID")
 if not Config.API_HASH:
     missing.append("API_HASH")
-if not Config.SESSION:
-    missing.append("SESSION")
 if missing:
     print(f"Critical Error: Missing required credentials: {', '.join(missing)}")
     exit(1)
-print(f"Credentials loaded: BOT_TOKEN={Config.BOT_TOKEN[:5]}..., API_ID={Config.API_ID}, API_HASH={Config.API_HASH[:5]}..., SESSION={Config.SESSION}")
+print(f"Credentials loaded: BOT_TOKEN={Config.BOT_TOKEN[:5]}..., API_ID={Config.API_ID}, API_HASH={Config.API_HASH[:5]}...,")
 
 app = Bot()
 db = Database()
