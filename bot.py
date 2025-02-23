@@ -8,12 +8,12 @@ from config import *
 from database import Database
 from utils import get_file_size
 from aiohttp import web
-from plugins import web_server
 
 # Logging Configuration
 logging.config.fileConfig('logging.conf')
 logging.getLogger().setLevel(logging.INFO)
 logging.getLogger("pyrogram").setLevel(logging.WARNING)
+LOGGER = logging.getLogger(__name__)
 
 # Initialize Bot
 bot = Client(
@@ -29,19 +29,25 @@ db = Database()
 # Temporary storage for bot info
 temp = type('Temp', (), {})()
 
+# Web server function
+async def web_server():
+    async def hello(request):
+        return web.Response(text="Telegram Movie Bot is running!")
+    
+    app = web.Application()
+    app.router.add_get('/', hello)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', PORT)  # Use PORT from config
+    await site.start()
+    return runner
+
 async def start_bot():
     print('\nStarting Telegram Movie Bot...')
     bot_info = await bot.get_me()
     temp.U_NAME = bot_info.username
     temp.B_NAME = bot_info.first_name
     bot.username = f'@{bot_info.username}'
-
-    if ON_HEROKU:
-        app = web.AppRunner(await web_server())
-        await app.setup()
-        bind_address = "0.0.0.0"
-        await web.TCPSite(app, bind_address, PORT).start()
-
     LOGGER.info(f"{temp.B_NAME} started with Pyrogram on @{temp.U_NAME}")
     LOGGER.info(LOG_STR)
 
@@ -83,15 +89,30 @@ async def search(client: Client, message: Message):
     await message.reply_text(response)
 
 async def main():
-    await bot.start()
-    await start_bot()
-    await idle()
-    await bot.stop()
-    db.close()
+    # Start web server if on Heroku
+    web_runner = None
+    if ON_HEROKU:
+        web_runner = await web_server()
+        LOGGER.info(f"Web server started on port {PORT}")
+
+    try:
+        await bot.start()
+        await start_bot()
+        await idle()  # Keeps bot running
+    except Exception as e:
+        LOGGER.error(f"An error occurred: {str(e)}", exc_info=True)
+    finally:
+        await bot.stop()
+        if web_runner:
+            await web_runner.cleanup()
+        db.close()
+        LOGGER.info("Bot stopped.")
 
 if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
     try:
-        asyncio.run(main())
-        LOGGER.info("Bot running...")
+        loop.run_until_complete(main())
     except KeyboardInterrupt:
-        LOGGER.info("Bot stopped.")
+        LOGGER.info("Received interrupt, shutting down...")
+    finally:
+        loop.close()
