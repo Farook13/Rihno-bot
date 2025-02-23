@@ -7,4 +7,3 @@ def get_file_size(file):
             return f"{size:.2f} {unit}"
         size /= 1024
     return f"{size:.2f} TB"
-​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
