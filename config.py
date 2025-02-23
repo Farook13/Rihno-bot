@@ -57,7 +57,7 @@ AUTO_DELETE = is_enabled(environ.get('AUTO_DELETE', 'True'), True)
 DELETE_TIME = int(environ.get('DELETE_TIME', 600))
 
 # Deployment Settings
-PORT = int(environ.get('PORT', 8080))
+PORT = int(environ.get('PORT', 8000))
 ON_HEROKU = 'DYNO' in environ
 FQDN = environ.get('FQDN', '0.0.0.0') if not ON_HEROKU else f"{environ.get('APP_NAME')}.herokuapp.com"
 URL = f"https://{FQDN}/" if ON_HEROKU else f"http://localhost:{PORT}/"
