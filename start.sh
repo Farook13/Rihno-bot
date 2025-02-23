@@ -39,4 +39,3 @@ fi
 # Keep the script running (optional, for environments like Docker)
 # Uncomment the line below if you want the script to keep the container alive
 # tail -f /dev/null
-​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
