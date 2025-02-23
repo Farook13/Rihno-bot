@@ -1,28 +1,54 @@
 import asyncio
+import logging
+import logging.config
 from aiohttp import web
-from pyrogram import Client, filters, idle
+from pyrogram import Client, filters, idle, __version__
+from pyrogram.raw.all import layer
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+import pyromod.listen
 from config import Config
 from database import Database
 from utils import check_force_sub
+from LuciferMoringstar_Robot import Media  # Assuming this is a custom module
 
-# Preload reactions for efficiency
+# Configure logging
+logging.config.fileConfig('logging.conf')  # Requires logging.conf in repo
+logging.getLogger().setLevel(logging.ERROR)
+
+# Preload reactions
 REACTIONS = ("😘", "🥳", "🤩", "💥", "🔥", "⚡️", "✨", "💎", "💗")
 
-# Validate credentials at startup
-if not all([Config.BOT_TOKEN, Config.API_ID, Config.API_HASH]):
-    print("Critical Error: Missing Telegram API credentials (BOT_TOKEN, API_ID, or API_HASH)")
-    exit(1)
-print(f"Credentials loaded: BOT_TOKEN={Config.BOT_TOKEN[:5]}..., API_ID={Config.API_ID}, API_HASH={Config.API_HASH[:5]}...")
+class Bot(Client):
+    def __init__(self):
+        super().__init__(
+            session_name=Config.SESSION,
+            api_id=Config.API_ID,
+            api_hash=Config.API_HASH,
+            bot_token=Config.BOT_TOKEN,
+            workers=50,  # From new code, increased concurrency
+            plugins={"root": "LuciferMoringstar_Robot"},  # Custom plugins
+            sleep_threshold=5,
+        )
+        self.username = None  # Set in start()
+
+    async def start(self):
+        await super().start()
+        await Media.ensure_indexes()  # MongoDB indexing from new code
+        me = await self.get_me()
+        self.username = '@' + me.username
+        print(f"{me.first_name} with Pyrogram v{__version__} (Layer {layer}) started on {self.username}.")
+
+    async def stop(self, *args):
+        await super().stop()
+        print("Bot stopped. Bye.")
 
 # Initialize bot and database
-app = Client(
-    "RihnoBot",
-    api_id=Config.API_ID,
-    api_hash=Config.API_HASH,
-    bot_token=Config.BOT_TOKEN,
-    workers=4  # Optimized for low concurrency with TgCrypto
-)
+if not all([Config.BOT_TOKEN, Config.API_ID, Config.API_HASH, Config.SESSION]):
+    print("Critical Error: Missing required credentials (BOT_TOKEN, API_ID, API_HASH, or SESSION)")
+    exit(1)
+print(f"Credentials loaded: BOT_TOKEN={Config.BOT_TOKEN[:5]}..., API_ID={Config.API_ID}, API_HASH={Config.API_HASH[:5]}..., SESSION={Config.SESSION}")
+
+app = Bot()
 db = Database()
 
 # Predefine responses and markup
@@ -33,7 +59,6 @@ JOIN_CHANNEL_TEXT = "Please join our channel to use this bot!"
 NO_FILES_TEXT = "No files found for your query."
 ADD_FILE_USAGE_TEXT = "Usage: /addfile <file_name> <file_link>"
 
-# Start command with debug logging
 @app.on_message(filters.command("start") & filters.private, group=0)
 async def start(client, message):
     user_id = message.from_user.id
@@ -53,7 +78,6 @@ async def start(client, message):
     except Exception as e:
         print(f"Error in start handler: {e}")
 
-# Autofilter with debug logging
 @app.on_message(filters.text & filters.private, group=1)
 async def filter_handler(client, message):
     user_id = message.from_user.id
@@ -72,9 +96,8 @@ async def filter_handler(client, message):
         )
         await asyncio.sleep(Config.AUTO_DELETE_TIME, result=reply.delete())
     except Exception as e:
-        print(f"Error in filterPOINTS handler: {e}")
+        print(f"Error in filter handler: {e}")
 
-# Admin command with debug logging
 @app.on_message(filters.command("addfile") & filters.user(Config.OWNER_ID), group=2)
 async def add_file(client, message):
     user_id = message.from_user.id
@@ -115,7 +138,6 @@ async def main():
     http_runner = await run_http_server()
     try:
         await app.start()
-        print("Bot started successfully, listening for messages...")
         await idle()
     except Exception as e:
         print(f"Failed to start bot: {e}")
