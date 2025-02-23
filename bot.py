@@ -58,9 +58,9 @@ async def handle_file(client: Client, message: Message):
  "message_id": message.message_id
  }
  if db.insert_file(file_data):
- await message.reply_text(f"Indexed: {file_data['file_name']}")
+     await message.reply_text(f"Indexed: {file_data['file_name']}")
  else:
- await message.reply_text("File already indexed.")
+     await message.reply_text("File already indexed.")
 
 @bot.on_message(filters.command("search"))
 async def search(client: Client, message: Message):
