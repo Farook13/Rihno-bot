@@ -8,7 +8,7 @@ from utils import check_force_sub
 from config import class Config
 logger = logging.getLogger(__name__)
 
-app = Client("Rihno2k_bot", api_id=12618934, api_hash=49aacd0bc2f8924add29fb02e20c8a16, bot_token=7857321740:AAEtcoE9BbLGCaF5TlkeGvhLZpXU36vco8E, workers=4)
+app = Client("Rihno2k_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN, workers=4)
 db = Database()
 
 REACTIONS = ["🔥", "✨", "😍", "🌝", "💥", "⚡️", "🎉", "🎊", "🪄", "💗", "❤️", "💞", "💛", "💖", "💙", "❤️‍🩹", "❤️‍🔥", "💎", "🧨", "💣"]
