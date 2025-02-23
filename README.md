@@ -11,7 +11,7 @@ A Telegram autofilter bot with file indexing and user credits.
 1. Clone the repo: `git clone https://github.com/yourusername/RihnoBot.git`
 2. Install dependencies: `pip install -r requirements.txt`
 3. Copy `.env.example` to `.env` and fill in your values.
-4. Run: `python main.py`
+4. Run: `python bot.py`
 
 ## Deployment
 - **Docker**: `docker build -t rihnobot . && docker run -d rihnobot`
