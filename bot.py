@@ -9,7 +9,6 @@ import pyromod.listen
 from config import Config
 from database import Database
 from utils import check_force_sub
-from LuciferMoringstar_Robot import Media  # Assuming this module exists
 
 # Configure logging
 logging.config.fileConfig('logging.conf')  # Requires logging.conf
@@ -26,14 +25,14 @@ class Bot(Client):
             api_hash=Config.API_HASH,
             bot_token=Config.BOT_TOKEN,
             workers=50,  # From new code
-            plugins={"root": "LuciferMoringstar_Robot"},
+            plugins={"root": "LuciferMoringstar_Robot"},  # Placeholder, adjust if needed
             sleep_threshold=5,
         )
         self.username = None
 
     async def start(self):
         await super().start()
-        await Media.ensure_indexes()  # From new code, assumes Media exists
+        # Removed Media.ensure_indexes(), relying on database.py initialization
         me = await self.get_me()
         self.username = '@' + me.username
         print(f"{me.first_name} with Pyrogram v{__version__} (Layer {layer}) started on {self.username}.")
