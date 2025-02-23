@@ -66,12 +66,12 @@ async def handle_file(client: Client, message: Message):
 async def search(client: Client, message: Message):
  query = " ".join(message.command[1:])
  if not query:
- await message.reply_text("Use: /search <query>")
+      await message.reply_text("Use: /search <query>")
  return
 
  results = db.search_files(query)
  if not results:
- await message.reply_text("No results found.")
+      await message.reply_text("No results found.")
  return
 
  response = "Found:\n"
