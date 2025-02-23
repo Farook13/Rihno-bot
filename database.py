@@ -28,13 +28,9 @@ class Database:
     def get_file_by_name(self, file_name):
         """Retrieve a single file by its file name, case-insensitive."""
         return self.collection.find_one({"file_name": {"$regex": f"^{file_name}$", "$options": "i"}})
-    ​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
-
-
     def get_file_by_name(self, file_name):
         """Retrieve a single file by its exact file name."""
         return self.collection.find_one({"file_name": file_name})
-
     def get_file_by_name(self, file_name):
         """Retrieve a single file by its exact file name with error handling."""
         try:
