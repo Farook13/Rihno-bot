@@ -4,6 +4,7 @@ import os
 import asyncio
 from pyrogram import Client, filters, idle
 from pyrogram.types import Message
+from pyrogram.errors import FloodWait
 from config import *
 from database import Database
 from utils import get_file_size
@@ -29,7 +30,7 @@ db = Database()
 # Temporary storage for bot info
 temp = type('Temp', (), {})()
 
-# Web server function
+# Web server function with port 8000
 async def web_server():
     async def hello(request):
         return web.Response(text="Telegram Movie Bot is running!")
@@ -38,7 +39,7 @@ async def web_server():
     app.router.add_get('/', hello)
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', 8000)  # Use PORT from config
+    site = web.TCPSite(runner, '0.0.0.0', 8000)  # Hardcoded port 8000
     await site.start()
     return runner
 
@@ -89,20 +90,35 @@ async def search(client: Client, message: Message):
     await message.reply_text(response)
 
 async def main():
-    # Start web server if on Heroku
+    # Start web server if on Heroku/Koyeb
     web_runner = None
-    if ON_HEROKU:
+    if ON_HEROKU:  # Assuming ON_HEROKU is in your config
         web_runner = await web_server()
-        LOGGER.info(f"Web server started on port {PORT}")
+        LOGGER.info("Web server started on port 8000")  # Updated log message
 
     try:
-        await bot.start()
+        # Attempt to start bot with flood wait handling
+        while True:
+            try:
+                await bot.start()
+                break  # Exit loop if successful
+            except FloodWait as e:
+                wait_time = e.value  # Get wait time in seconds
+                LOGGER.warning(f"Flood wait triggered. Waiting {wait_time} seconds...")
+                await asyncio.sleep(wait_time)
+            except Exception as e:
+                LOGGER.error(f"Unexpected error during start: {str(e)}", exc_info=True)
+                raise
+
         await start_bot()
+        LOGGER.info("Connected to MongoDB")  # Assuming this is logged by Database
         await idle()  # Keeps bot running
     except Exception as e:
         LOGGER.error(f"An error occurred: {str(e)}", exc_info=True)
     finally:
-        await bot.stop()
+        # Check if bot is still running before stopping
+        if bot.is_initialized and not bot.is_stopped:
+            await bot.stop()
         if web_runner:
             await web_runner.cleanup()
         db.close()
@@ -115,4 +131,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         LOGGER.info("Received interrupt, shutting down...")
     finally:
-        loop.close()
+        if not loop.is_closed():
+            loop.close()
