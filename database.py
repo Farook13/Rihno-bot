@@ -24,12 +24,26 @@ class Database:
                 {"caption": {"$regex": query, "$options": "i"}}
             ]
         }).limit(10)
+        
+    def get_file_by_name(self, file_name):
+        """Retrieve a single file by its file name, case-insensitive."""
+        return self.collection.find_one({"file_name": {"$regex": f"^{file_name}$", "$options": "i"}})
+    ​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
+
 
     def get_file_by_name(self, file_name):
         """Retrieve a single file by its exact file name."""
         return self.collection.find_one({"file_name": file_name})
 
-    def close(self):
+    def get_file_by_name(self, file_name):
+        """Retrieve a single file by its exact file name with error handling."""
+        try:
+            return self.collection.find_one({"file_name": file_name})
+        except Exception as e:
+            LOGGER.error(f"Error retrieving file {file_name}: {str(e)}")
+            return None
+        
+      def close(self):
         """Close the MongoDB connection."""
         self.client.close()
         LOGGER.info("MongoDB connection closed.")
