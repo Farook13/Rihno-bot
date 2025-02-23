@@ -1,22 +1,29 @@
-from pymongo import MongoClient
-from config import Config
+import pymongo
+from config import DATABASE_URI, DATABASE_NAME, COLLECTION_NAME, LOGGER
 
 class Database:
     def __init__(self):
-        try:
-            self.client = MongoClient(Config.DATABASE_URI, serverSelectionTimeoutMS=2000)
-            self.db = self.client[Config.DATABASE_NAME]
-            self.files_collection = self.db["files"]
-            self.files_collection.create_index("file_name")
-        except Exception as e:
-            print(f"Failed to connect to MongoDB: {e}")
-            self.files_collection = None
+        self.client = pymongo.MongoClient(DATABASE_URI)
+        self.db = self.client[DATABASE_NAME]
+        self.collection = self.db[COLLECTION_NAME]
+        LOGGER.info("Connected to MongoDB.")
 
-    def add_file(self, file_name: str, file_link: str):
-        if self.files_collection:
-            self.files_collection.insert_one({"file_name": file_name, "file_link": file_link})
+    def insert_file(self, file_data):
+        existing = self.collection.find_one({"file_id": file_data["file_id"]})
+        if not existing:
+            self.collection.insert_one(file_data)
+            return True
+        return False
 
-    def search_files(self, query: str):
-        if self.files_collection:
-            return list(self.files_collection.find({"file_name": {"$regex": query, "$options": "i"}}, {"_id": 0}).limit(10))
-        return []
+    def search_files(self, query):
+        return self.collection.find({
+            "$or": [
+                {"file_name": {"$regex": query, "$options": "i"}},
+                {"caption": {"$regex": query, "$options": "i"}}
+            ]
+        }).limit(10)
+
+    def close(self):
+        self.client.close()
+        LOGGER.info("MongoDB connection closed.")
+​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
