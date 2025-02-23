@@ -1,23 +1,13 @@
-# RihnoBot
-A Telegram autofilter bot with file indexing and user credits.
+# Telegram Movie Bot
+
+A Telegram bot for indexing and searching movie files with auto-filter, powered by MongoDB.
 
 ## Features
-- Random reactions on `/start`.
-- Autofilter files from MongoDB.
-- Admin file indexing with `/index`.
-- User credits system.
+- Indexes forwarded movie files into MongoDB.
+- Auto-filter search by language, quality, season, and year.
+- IMDB integration for movie details.
+- Auto-delete messages after a set time.
 
 ## Setup
-1. Clone the repo: `git clone https://github.com/yourusername/RihnoBot.git`
-2. Install dependencies: `pip install -r requirements.txt`
-3. Copy `.env.example` to `.env` and fill in your values.
-4. Run: `python bot.py`
-
-## Deployment
-- **Docker**: `docker build -t rihnobot . && docker run -d rihnobot`
-- **Heroku**: Push to Heroku with `Procfile` and `app.json`.
-- **Render**: Use `render.yaml`.
-- **Okteto**: Use `okteto-compose.yml`.
-
-## License
-MIT
+1. **Clone the repository**:
+​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
