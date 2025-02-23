@@ -1,9 +1,10 @@
-from pyrogram import Client
-from config import Config
+from config import LOGGER
 
-async def check_force_sub(client: Client, user_id: int) -> bool:
-    try:
-        member = await client.get_chat_member(int(Config.AUTH_CHANNEL), user_id)
-        return member.status in ["member", "administrator", "creator"]
-    except Exception:
-        return False
+def get_file_size(file):
+    size = file.file_size
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if size < 1024:
+            return f"{size:.2f} {unit}"
+        size /= 1024
+    return f"{size:.2f} TB"
+​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
