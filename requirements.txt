@@ -1,6 +1,4 @@
-pyrogram==2.0.106
+python-telegram-bot==13.15
 pymongo==4.6.1
-python-dotenv==1.0.0
-aiohttp==3.9.5
-tgcrypto==1.2.5
-pyromod==1.5  # Added for pyromod.listen
+dnspython==2.4.2
+​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
