@@ -2,7 +2,7 @@ version: "3"
 services:
   bot:
     build: .
-    command: python run.py
+    command: python script.py
     environment:
       - API_ID=${API_ID}
       - API_HASH=${API_HASH}
