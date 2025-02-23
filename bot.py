@@ -76,7 +76,7 @@ async def search(client: Client, message: Message):
 
  response = "Found:\n"
  for i, r in enumerate(results, 1):
- response += f"{i}. {r['file_name']} ({r['size']})\n"
+      response += f"{i}. {r['file_name']} ({r['size']})\n"
  await message.reply_text(response)
 
 async def main():
