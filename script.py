@@ -5,7 +5,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from database import Database
 from utils import check_force_sub
-from config import class Config:
+from config import Config:
 logger = logging.getLogger(__name__)
 
 app = Client("Rihno2k_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN, workers=4)
